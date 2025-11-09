@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Catalog - VinoElite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #c19a6b;
+            --primary-dark: #a67c52;
+            --primary-light: #e8c8a0;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --bg-light: #2d1b1b;
+            --text-light: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 300; letter-spacing: 2px; color: var(--primary-light); text-decoration: none; }
+        .logo span { font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: color 0.3s ease; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary-light); }
+        .header-actions { display: flex; gap: 20px; }
+        .header-actions button { background: none; border: none; color: var(--text-light); font-size: 1.2rem; cursor: pointer; transition: color 0.3s ease; }
+        .header-actions button:hover { color: var(--primary-light); }
+        
+        /* Page Header */
+        .page-header { padding: 40px 0 20px; }
+        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .breadcrumb a:hover { color: var(--primary-light); }
+        .page-title { font-size: 2.5rem; font-weight: 300; letter-spacing: 1px; margin-bottom: 10px; }
+        .page-subtitle { color: var(--text-muted); font-size: 1rem; max-width: 600px; }
+        
+        /* Catalog Layout */
+        .catalog-layout { display: flex; gap: 30px; padding: 30px 0 60px; align-items: flex-start; }
+        
+        /* Filters Sidebar */
+        .filters-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 110px; }
+        .filters-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .filters-title { font-size: 1.3rem; font-weight: 400; }
+        .reset-filters { background: none; border: none; color: var(--primary-color); font-size: 0.9rem; cursor: pointer; transition: color 0.3s ease; }
+        .reset-filters:hover { color: var(--primary-light); }
+        .filter-group { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .filter-title { font-size: 1.1rem; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .filter-title i { transition: transform 0.3s ease; }
+        .filter-content { max-height: 300px; overflow-y: auto; }
+        .filter-option { margin-bottom: 12px; display: flex; align-items: center; }
+        .filter-option input { margin-right: 10px; accent-color: var(--primary-color); }
+        .filter-option label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .option-count { color: var(--text-muted); font-size: 0.8rem; }
+        .price-range { display: flex; flex-direction: column; gap: 15px; }
+        .price-inputs { display: flex; gap: 10px; align-items: center; }
+        .price-inputs span { color: var(--text-muted); }
+        .price-input { flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); border-radius: 5px; padding: 8px 12px; color: var(--text-light); width: 100%; }
+        #price-slider-container { position: relative; height: 20px; }
+        .price-slider { position: absolute; width: 100%; height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; outline: none; -webkit-appearance: none; pointer-events: none; }
+        .price-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--primary-color); cursor: pointer; pointer-events: auto; }
+        
+        /* Products Grid */
+        .products-section { flex: 1; }
+        .products-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; }
+        .products-count { color: var(--text-muted); }
+        .sort-options { display: flex; align-items: center; gap: 10px; }
+        .sort-select { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); border-radius: 5px; padding: 8px 12px; color: var(--text-light); cursor: pointer; }
+        
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .product-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 15px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
+        .product-card:hover { transform: translateY(-10px); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4); }
+        .product-image { height: 300px; position: relative; overflow: hidden; background: linear-gradient(to bottom, var(--bg-light), var(--bg-dark)); }
+        .product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .product-card:hover .product-image img { transform: scale(1.05); }
+        .product-badge { position: absolute; top: 15px; right: 15px; background: var(--primary-color); color: var(--bg-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; }
+        .product-info { padding: 20px; }
+        .product-region { font-size: 0.8rem; color: var(--primary-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .product-name { font-size: 1.3rem; margin-bottom: 10px; font-weight: 400; letter-spacing: 1px; }
+        .product-price { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .price { font-size: 1.5rem; font-weight: 300; color: var(--primary-light); }
+        .old-price { font-size: 1rem; text-decoration: line-through; color: var(--text-muted); }
+        .add-to-cart { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+        .add-to-cart:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        
+        /* Pagination */
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 50px; }
+        .pagination-btn { width: 40px; height: 40px; border-radius: 5px; background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); color: var(--text-light); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; }
+        .pagination-btn.active, .pagination-btn:hover { background: var(--primary-color); color: var(--bg-dark); }
+        
+        /* Mobile Filters */
+        .mobile-filters-btn { display: none; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; align-items: center; gap: 8px; margin-bottom: 20px; width: 100%; justify-content: center; }
+        .mobile-filters-btn:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); }
+        
+        /* Footer */
+        footer { background: var(--bg-darker); padding: 60px 0 30px; border-top: 1px solid var(--border-color); }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-column h3 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; color: var(--text-light); text-decoration: none; transition: all 0.3s ease; }
+        .social-links a:hover { background: var(--primary-color); color: var(--bg-dark); transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; }
+        
+        /* Responsive Styles */
+        @media (max-width: 1200px) {
+            .catalog-layout { flex-direction: column; }
+            .filters-sidebar { width: 100%; position: static; display: none; }
+            .filters-sidebar.active { display: block; }
+            .mobile-filters-btn { display: flex; }
+        }
+        @media (max-width: 768px) {
+            .nav-links, .header-actions { display: none; }
+            .mobile-menu-btn { display: block; }
+            .products-header { flex-direction: column; align-items: flex-start; }
+            .sort-options { width: 100%; justify-content: space-between; }
+            .products-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+        }
+        @media (max-width: 576px) {
+            .page-title { font-size: 2rem; }
+            .products-grid { grid-template-columns: 1fr; }
+            .price-inputs { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="indexWine.html" class="logo">Vino<span>Elite</span></a>
+                <nav class="nav-links">
+                    <a href="indexWine.html">Home</a>
+                    <a href="catalogWine.html" class="active">Catalog</a>
+                    <a href="#">Collections</a>
+                    <a href="#">Wineries</a>
+                    <a href="#">Promotions</a>
+                </nav>
+                <div class="header-actions">
+                    <button><i class="fas fa-search"></i></button>
+                    <button><i class="far fa-user"></i></button>
+                    <button><i class="fas fa-shopping-cart"></i></button>
+                </div>
+                <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="indexWine.html">Home</a> / <span>Wine Catalog</span>
+            </div>
+            <h1 class="page-title">Catalog of Exclusive Wines</h1>
+            <p class="page-subtitle">Discover our collection of premium wines from the world's best wine regions.</p>
+        </div>
+    </section>
+
+    <!-- Catalog Layout -->
+    <div class="container">
+        <button class="mobile-filters-btn">
+            <i class="fas fa-filter"></i>
+            <span>Show Filters</span>
+        </button>
+        
+        <div class="catalog-layout">
+            <!-- Filters Sidebar -->
+            <aside class="filters-sidebar">
+                <div class="filters-header">
+                    <h2 class="filters-title">Filters</h2>
+                    <button class="reset-filters">Reset All</button>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-title"><span>Category</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="filter-content" id="category-filters">
+                        <!-- Category filters will be dynamically inserted here -->
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-title"><span>Country</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="filter-content" id="country-filters">
+                        <!-- Country filters will be dynamically inserted here -->
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-title"><span>Price, $</span><i class="fas fa-chevron-down"></i></div>
+                    <div class="filter-content">
+                        <div class="price-range">
+                            <div class="price-inputs">
+                                <input type="number" class="price-input" id="min-price-input" placeholder="From">
+                                <span>-</span>
+                                <input type="number" class="price-input" id="max-price-input" placeholder="To">
+                            </div>
+                            <div id="price-slider-container">
+                                <input type="range" class="price-slider" id="min-price-slider">
+                                <input type="range" class="price-slider" id="max-price-slider">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Products Section -->
+            <section class="products-section">
+                <div class="products-header">
+                    <div class="products-count">Loading wines...</div>
+                    <div class="sort-options">
+                        <span>Sort by:</span>
+                        <select class="sort-select" id="sort-select">
+                            <option value="popularity">Popularity</option>
+                            <option value="price-asc">Price (low to high)</option>
+                            <option value="price-desc">Price (high to low)</option>
+                            <option value="name-asc">Name (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="products-grid">
+                    <!-- Product cards will be dynamically inserted here -->
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination">
+                    <!-- Pagination buttons can be added here if needed -->
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                 <div class="footer-column">
+                        <h3>VinoElite</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Contact</a></li>
+                            <li><a href="#">Shipping & Payment</a></li>
+                            <li><a href="#">Returns</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Catalog</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">Red Wines</a></li>
+                            <li><a href="#">White Wines</a></li>
+                            <li><a href="#">Sparkling Wines</a></li>
+                            <li><a href="#">Spirits</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Help</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">FAQ</a></li>
+                            <li><a href="#">Terms of Use</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Sitemap</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Contacts</h3>
+                        <ul class="footer-links">
+                            <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                            <li><i class="fas fa-envelope"></i> info@vinoelite.com</li>
+                            <li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li>
+                        </ul>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-telegram"></i></a>
+                            <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 VinoElite. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+    // ===============================================================
+    // =================== FIREBASE INITIALIZATION ===================
+    // ===============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+      authDomain: "wine-91d0e.firebaseapp.com",
+      projectId: "wine-91d0e",
+      storageBucket: "wine-91d0e.firebasestorage.app",
+      messagingSenderId: "1021620433427",
+      appId: "1:1021620433427:web:5439252fb350c4455a85e6",
+      measurementId: "G-TRWHY3KXK1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================================================
+    // =================== MAIN CATALOG SCRIPT =======================
+    // ===============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        let allProducts = []; // This will hold the products fetched from Firebase
+
+        // ===============================================================
+        // =================== DOM ELEMENT REFERENCES ====================
+        // ===============================================================
+        const productsGrid = document.querySelector('.products-grid');
+        const productsCountEl = document.querySelector('.products-count');
+        const categoryFiltersContainer = document.getElementById('category-filters');
+        const countryFiltersContainer = document.getElementById('country-filters');
+        const minPriceInput = document.getElementById('min-price-input');
+        const maxPriceInput = document.getElementById('max-price-input');
+        const minPriceSlider = document.getElementById('min-price-slider');
+        const maxPriceSlider = document.getElementById('max-price-slider');
+        const sortSelect = document.getElementById('sort-select');
+        const resetFiltersBtn = document.querySelector('.reset-filters');
+
+        // ===============================================================
+        // =================== DATA FETCHING FROM FIREBASE ===============
+        // ===============================================================
+        async function fetchProducts() {
+            try {
+                const q = query(collection(db, "products"), where("isArchived", "==", false));
+                const querySnapshot = await getDocs(q);
+                allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Once data is fetched, initialize the page
+                initializePage();
+            } catch (error) {
+                console.error("Error fetching products: ", error);
+                productsGrid.innerHTML = '<p>Error loading products. Please try again later.</p>';
+                productsCountEl.textContent = 'Found 0 wines';
+            }
+        }
+
+        // ===============================================================
+        // =================== RENDER & FILTER LOGIC =====================
+        // ===============================================================
+
+        function renderProducts(products) {
+            productsGrid.innerHTML = '';
+            if (products.length === 0) {
+                productsGrid.innerHTML = '<p>No products match your criteria.</p>';
+            }
+            products.forEach(prod => {
+                productsGrid.innerHTML += `
+                    <a href="productWine.html?id=${prod.id}" class="product-card">
+                        <div class="product-image">
+                            <img src="${prod.imageUrl}" alt="${prod.name}">
+                            ${prod.badge ? `<div class="product-badge">${prod.badge}</div>` : ''}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-region">${prod.region}</div>
+                            <h3 class="product-name">${prod.name}</h3>
+                            <div class="product-price">
+                                <div>
+                                    <div class="price">$${prod.price.toFixed(2)}</div>
+                                    ${prod.oldPrice ? `<div class="old-price">$${prod.oldPrice.toFixed(2)}</div>` : ''}
+                                </div>
+                            </div>
+                            <button class="add-to-cart"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                        </div>
+                    </a>
+                `;
+            });
+            productsCountEl.textContent = `Found ${products.length} wines`;
+        }
+
+        function applyFiltersAndSort() {
+            let filteredProducts = [...allProducts];
+
+            // Category Filter
+            const selectedCategories = Array.from(document.querySelectorAll('#category-filters input:checked')).map(el => el.value);
+            if (selectedCategories.length > 0) {
+                filteredProducts = filteredProducts.filter(p => selectedCategories.includes(p.category));
+            }
+
+            // Country Filter
+            const selectedCountries = Array.from(document.querySelectorAll('#country-filters input:checked')).map(el => el.value);
+            if (selectedCountries.length > 0) {
+                filteredProducts = filteredProducts.filter(p => selectedCountries.includes(p.country));
+            }
+            
+            // Price Filter
+            const minPrice = parseFloat(minPriceInput.value) || 0;
+            const maxPrice = parseFloat(maxPriceInput.value) || Infinity;
+            filteredProducts = filteredProducts.filter(p => p.price >= minPrice && p.price <= maxPrice);
+
+            // Sorting
+            const sortBy = sortSelect.value;
+            switch (sortBy) {
+                case 'price-asc':
+                    filteredProducts.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    filteredProducts.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name-asc':
+                    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+            }
+
+            renderProducts(filteredProducts);
+        }
+
+        // ===============================================================
+        // =================== INITIALIZATION ============================
+        // ===============================================================
+
+        function initializePage() {
+            if (allProducts.length === 0) {
+                 productsGrid.innerHTML = '<p>No products available at the moment.</p>';
+                 productsCountEl.textContent = 'Found 0 wines';
+                 return;
+            }
+            
+            initializeFilters();
+            renderProducts(allProducts);
+        }
+
+        function initializeFilters() {
+            // Populate Category Filters
+            const categories = [...new Set(allProducts.map(p => p.category))];
+            categoryFiltersContainer.innerHTML = categories.map(cat => `
+                <div class="filter-option">
+                    <input type="checkbox" id="cat-${cat.toLowerCase()}" value="${cat}">
+                    <label for="cat-${cat.toLowerCase()}">
+                        <span>${cat} Wines</span>
+                        <span class="option-count">(${allProducts.filter(p => p.category === cat).length})</span>
+                    </label>
+                </div>
+            `).join('');
+
+            // Populate Country Filters
+            const countries = [...new Set(allProducts.map(p => p.country))];
+            countryFiltersContainer.innerHTML = countries.map(country => `
+                <div class="filter-option">
+                    <input type="checkbox" id="country-${country.toLowerCase().replace(' ','-')}" value="${country}">
+                    <label for="country-${country.toLowerCase().replace(' ','-')}">
+                        <span>${country}</span>
+                        <span class="option-count">(${allProducts.filter(p => p.country === country).length})</span>
+                    </label>
+                </div>
+            `).join('');
+
+            // Price Slider Logic
+            const prices = allProducts.map(p => p.price);
+            const minP = Math.floor(Math.min(...prices));
+            const maxP = Math.ceil(Math.max(...prices));
+            
+            minPriceInput.min = minPriceSlider.min = minP;
+            minPriceInput.max = minPriceSlider.max = maxP;
+            maxPriceInput.min = maxPriceSlider.min = minP;
+            maxPriceInput.max = maxPriceSlider.max = maxP;
+
+            minPriceInput.value = minPriceSlider.value = minP;
+            maxPriceInput.value = maxPriceSlider.value = maxP;
+
+            const priceGap = 10;
+
+            minPriceSlider.addEventListener('input', () => {
+                if (parseInt(maxPriceSlider.value) - parseInt(minPriceSlider.value) <= priceGap) {
+                    minPriceSlider.value = parseInt(maxPriceSlider.value) - priceGap;
+                }
+                minPriceInput.value = minPriceSlider.value;
+                applyFiltersAndSort();
+            });
+            maxPriceSlider.addEventListener('input', () => {
+                 if (parseInt(maxPriceSlider.value) - parseInt(minPriceSlider.value) <= priceGap) {
+                    maxPriceSlider.value = parseInt(minPriceSlider.value) + priceGap;
+                }
+                maxPriceInput.value = maxPriceSlider.value;
+                applyFiltersAndSort();
+            });
+             minPriceInput.addEventListener('input', () => {
+                minPriceSlider.value = minPriceInput.value;
+                applyFiltersAndSort();
+            });
+             maxPriceInput.addEventListener('input', () => {
+                maxPriceSlider.value = maxPriceInput.value;
+                applyFiltersAndSort();
+            });
+
+            // Add event listeners to all filter inputs
+            document.querySelectorAll('.filters-sidebar input').forEach(input => {
+                input.addEventListener('change', applyFiltersAndSort);
+            });
+            sortSelect.addEventListener('change', applyFiltersAndSort);
+            
+            resetFiltersBtn.addEventListener('click', () => {
+                document.querySelectorAll('.filters-sidebar input[type="checkbox"]').forEach(cb => cb.checked = false);
+                minPriceInput.value = minPriceSlider.value = minP;
+                maxPriceInput.value = maxPriceSlider.value = maxP;
+                sortSelect.value = 'popularity';
+                applyFiltersAndSort();
+            });
+        }
+
+        // --- Mobile Functionality ---
+        const mobileFiltersBtn = document.querySelector('.mobile-filters-btn');
+        const filtersSidebar = document.querySelector('.filters-sidebar');
+        mobileFiltersBtn.addEventListener('click', () => {
+            filtersSidebar.classList.toggle('active');
+            const btnText = filtersSidebar.classList.contains('active') ? 'Hide Filters' : 'Show Filters';
+            mobileFiltersBtn.querySelector('span').textContent = btnText;
+        });
+        
+        // --- Start the process ---
+        fetchProducts();
+    });
+    </script>
+</body>
+</html>
