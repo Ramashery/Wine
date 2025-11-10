@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Meta tags will be dynamically updated by JS -->
+    <title>Product Details - VinoElite</title>
+    <meta name="description" content="Loading product details...">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #c19a6b;
+            --primary-dark: #a67c52;
+            --primary-light: #e8c8a0;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --text-light: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-darker) 0%, #2d1b1b 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header (from index.html) */
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 300; letter-spacing: 2px; color: var(--primary-light); text-decoration: none; }
+        .logo span { font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: color 0.3s ease; }
+        .nav-links a:hover { color: var(--primary-light); }
+        .header-actions { display: flex; gap: 20px; }
+        .header-actions button { background: none; border: none; color: var(--text-light); font-size: 1.2rem; cursor: pointer; transition: color 0.3s ease; }
+        .header-actions button:hover { color: var(--primary-light); }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; z-index: 1001; }
+        
+        /* Breadcrumb */
+        .breadcrumb-section { padding: 20px 0; }
+        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .breadcrumb a:hover { color: var(--primary-light); }
+        
+        /* Product Section */
+        .product-section { padding: 20px 0 60px; }
+        .product-container { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: start; }
+        .product-gallery { position: relative; }
+        .main-image { width: 100%; border-radius: 15px; overflow: hidden; box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4); background: linear-gradient(to bottom, #2d1b1b, #1a1a1a); }
+        .main-image img { width: 100%; height: auto; display: block; }
+        .image-badge { position: absolute; top: 20px; right: 20px; background: var(--primary-color); color: var(--bg-darker); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; }
+        
+        .product-info { padding: 20px 0; }
+        .product-category { font-size: 0.9rem; color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .product-title { font-size: 2.2rem; margin-bottom: 15px; font-weight: 400; letter-spacing: 1px; line-height: 1.2; }
+        .product-rating { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .stars { color: #ffc107; }
+        .rating-value { font-weight: 600; }
+        .rating-count { color: var(--text-muted); font-size: 0.9rem; }
+        .product-description { margin-bottom: 25px; color: var(--text-muted); line-height: 1.7; white-space: pre-wrap; }
+        .product-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 30px; }
+        .detail-item { display: flex; align-items: center; gap: 10px; }
+        .detail-item i { color: var(--primary-color); width: 20px; text-align: center; }
+        
+        .pricing { margin-bottom: 15px; }
+        .current-price { font-size: 2.5rem; font-weight: 300; color: var(--primary-light); margin-bottom: 5px; }
+        .old-price { font-size: 1.5rem; text-decoration: line-through; color: var(--text-muted); }
+        .discount { background: #e74c3c; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.9rem; margin-left: 10px; }
+        
+        .stock-status { font-weight: 600; margin-bottom: 30px; padding: 5px 10px; border-radius: 5px; display: inline-block; }
+        .stock-status.in-stock { color: var(--success-color); }
+        .stock-status.low-stock { color: var(--warning-color); }
+        .stock-status.out-of-stock { color: var(--danger-color); }
+        
+        .purchase-options { display: flex; gap: 15px; margin-bottom: 30px; }
+        .quantity-selector { display: flex; align-items: center; background: var(--bg-card); border-radius: 8px; padding: 5px; border: 1px solid var(--border-color); }
+        .quantity-btn { background: none; border: none; color: var(--text-light); font-size: 1.2rem; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .quantity-input { background: none; border: none; color: var(--text-light); text-align: center; width: 50px; font-size: 1.1rem; }
+        .add-to-cart { flex: 1; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-darker); border: none; padding: 15px 25px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .add-to-cart:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        .add-to-cart:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        /* Tabs Section */
+        .tabs-section { margin: 60px 0; }
+        .tabs-header { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 30px; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); padding: 15px 25px; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; position: relative; }
+        .tab-btn.active { color: var(--primary-light); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-content h3 { font-size: 1.5rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        
+        .tasting-notes-list { list-style: none; padding-left: 0; }
+        .tasting-notes-list li { margin-bottom: 15px; }
+        .tasting-notes-list strong { color: var(--primary-light); display: block; margin-bottom: 5px; }
+
+        .food-pairing-content { line-height: 1.8; }
+        
+        /* Related Products */
+        .related-section { margin: 80px 0; }
+        .section-title { font-size: 1.8rem; margin-bottom: 30px; font-weight: 400; text-align: center; color: var(--primary-light); letter-spacing: 1px; }
+        .related-products { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
+        .related-product { background: var(--bg-card); border-radius: 12px; overflow: hidden; transition: transform 0.3s ease; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); }
+        .related-product:hover { transform: translateY(-5px); }
+        .related-product-image { height: 200px; overflow: hidden; }
+        .related-product-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .related-product:hover .related-product-image img { transform: scale(1.05); }
+        .related-product-info { padding: 20px; }
+        .related-product-title { font-size: 1.1rem; margin-bottom: 10px; font-weight: 500; }
+        .related-product-price { color: var(--primary-light); font-size: 1.2rem; font-weight: 500; }
+        
+        /* Footer (from index.html) */
+        footer { background: var(--bg-darker); padding: 60px 0 30px; border-top: 1px solid var(--border-color); }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-column h3 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; color: var(--text-light); text-decoration: none; transition: all 0.3s ease; }
+        .social-links a:hover { background: var(--primary-color); color: var(--bg-dark); transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        
+        /* Mobile Styles */
+        @media (max-width: 992px) {
+            .product-container { grid-template-columns: 1fr; gap: 30px; }
+        }
+        @media (max-width: 768px) {
+            .header-actions { display: none; }
+            .mobile-menu-btn { display: block; }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 75px; /* Высота хедера */
+                left: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 20px;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .nav-links.active {
+                display: flex;
+            }
+            .product-title { font-size: 1.8rem; }
+            .purchase-options { flex-direction: column; }
+            .quantity-selector { justify-content: center; }
+            .tabs-header { flex-wrap: wrap; }
+            .tab-btn { flex: 1; min-width: 120px; text-align: center; }
+        }
+        @media (max-width: 576px) {
+            .product-details { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header (from index.html) -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                <nav class="nav-links" id="main-nav">
+                    <a href="/index.html">Home</a>
+                    <a href="/catalog.html">Catalog</a>
+                    <a href="#">Collections</a>
+                    <a href="#">Wineries</a>
+                    <a href="#">About Us</a>
+                </nav>
+                <div class="header-actions">
+                    <button><i class="fas fa-search"></i></button>
+                    <button><i class="far fa-user"></i></button>
+                    <button><i class="fas fa-shopping-cart"></i></button>
+                </div>
+                <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <section class="breadcrumb-section">
+        <div class="container">
+            <div class="breadcrumb" id="breadcrumb">
+                <!-- Breadcrumb will be dynamically inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Section -->
+    <section class="product-section">
+        <div class="container">
+            <div class="product-container">
+                <!-- Product Gallery -->
+                <div class="product-gallery">
+                    <div class="main-image">
+                        <img src="" alt="Main product image" id="main-product-image">
+                        <div class="image-badge" id="product-badge"></div>
+                    </div>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="product-info">
+                    <div class="product-category" id="product-category"></div>
+                    <h1 class="product-title" id="product-title">Loading product...</h1>
+                    
+                    <div class="product-rating" id="product-rating">
+                        <!-- Rating stars will be dynamically inserted here -->
+                    </div>
+                    
+                    <p class="product-description" id="product-description"></p>
+                    
+                    <div class="product-details" id="product-details-list">
+                        <!-- Details will be dynamically inserted here -->
+                    </div>
+                    
+                    <div class="pricing" id="product-pricing">
+                        <!-- Pricing will be dynamically inserted here -->
+                    </div>
+
+                    <div class="stock-status" id="product-stock-status"></div>
+                    
+                    <div class="purchase-options">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus">-</button>
+                            <input type="text" class="quantity-input" value="1" readonly>
+                            <button class="quantity-btn plus">+</button>
+                        </div>
+                        <button class="add-to-cart" id="add-to-cart-btn"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tabs Section -->
+    <section class="tabs-section">
+        <div class="container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="tasting-notes">Tasting Notes</button>
+                <button class="tab-btn" data-tab="food-pairing">Food Pairing</button>
+                <button class="tab-btn" data-tab="reviews">Reviews</button>
+            </div>
+            
+            <div class="tab-content active" id="tasting-notes-tab">
+                <!-- Tasting notes content will be dynamically inserted here -->
+            </div>
+            
+            <div class="tab-content" id="food-pairing-tab">
+                <!-- Food pairing content will be dynamically inserted here -->
+            </div>
+            
+            <div class="tab-content" id="reviews-tab">
+                <!-- Reviews content will be dynamically inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Products -->
+    <section class="related-section">
+        <div class="container">
+            <h2 class="section-title">You Might Also Like</h2>
+            <div class="related-products" id="related-products-grid">
+                <!-- Related products will be dynamically inserted here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (from index.html) -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>VinoElite</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Shipping & Payment</a></li>
+                        <li><a href="#">Returns</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Catalog</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Red Wines</a></li>
+                        <li><a href="#">White Wines</a></li>
+                        <li><a href="#">Sparkling Wines</a></li>
+                        <li><a href="#">Spirits</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Help</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacts</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                        <li><i class="fas fa-envelope"></i> info@vinoelite.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li>
+                    </ul>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 VinoElite. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+    // ===============================================================
+    // =================== FIREBASE INITIALIZATION ===================
+    // ===============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+      authDomain: "wine-91d0e.firebaseapp.com",
+      projectId: "wine-91d0e",
+      storageBucket: "wine-91d0e.firebasestorage.app",
+      messagingSenderId: "1021620433427",
+      appId: "1:1021620433427:web:5439252fb350c4455a8se6",
+      measurementId: "G-TRWHY3KXK1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================================================
+    // =================== MAIN PRODUCT PAGE SCRIPT ==================
+    // ===============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // ===============================================================
+        // =================== HELPER FUNCTIONS ==========================
+        // ===============================================================
+        
+        function getProductSlugFromUrl() {
+            const path = window.location.pathname;
+            const parts = path.split('/').filter(part => part);
+            if (parts.length >= 2 && parts[0] === 'catalog') {
+                return parts[parts.length - 1];
+            }
+            return null;
+        }
+
+        function generateStars(rating) {
+            let starsHTML = '';
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+
+            for (let i = 0; i < fullStars; i++) starsHTML += '<i class="fas fa-star"></i>';
+            if (halfStar) starsHTML += '<i class="fas fa-star-half-alt"></i>';
+            for (let i = 0; i < emptyStars; i++) starsHTML += '<i class="far fa-star"></i>';
+            
+            return starsHTML;
+        }
+
+        function updateMetaAndSchema(product) {
+            document.title = product.metaTitle || `${product.name} - VinoElite`;
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) {
+                metaDesc.content = product.metaDescription || product.description;
+            }
+
+            const schema = {
+                "@context": "https://schema.org/",
+                "@type": "Product",
+                "name": product.name,
+                "image": product.imageUrl,
+                "description": product.description,
+                "sku": product.sku,
+                "gtin13": product.gtin,
+                "brand": { "@type": "Brand", "name": product.brand },
+                "offers": {
+                    "@type": "Offer",
+                    "url": window.location.href,
+                    "priceCurrency": "USD",
+                    "price": product.price,
+                    "itemCondition": "https://schema.org/NewCondition"
+                }
+            };
+
+            const availabilityMap = {
+                'In Stock': 'https://schema.org/InStock',
+                'Low Stock': 'https://schema.org/InStock',
+                'Out of Stock': 'https://schema.org/OutOfStock'
+            };
+            schema.offers.availability = availabilityMap[product.stockStatus] || 'https://schema.org/InStock';
+
+            if (product.ratingValue && product.reviewCount) {
+                schema.aggregateRating = {
+                    "@type": "AggregateRating",
+                    "ratingValue": product.ratingValue,
+                    "reviewCount": product.reviewCount
+                };
+            }
+
+            let schemaScript = document.getElementById('schema-markup');
+            if (!schemaScript) {
+                schemaScript = document.createElement('script');
+                schemaScript.type = 'application/ld+json';
+                schemaScript.id = 'schema-markup';
+                document.head.appendChild(schemaScript);
+            }
+            schemaScript.textContent = JSON.stringify(schema, null, 2);
+        }
+
+        // ===============================================================
+        // =================== DATA FETCHING =============================
+        // ===============================================================
+        
+        async function fetchProductBySlug(slug) {
+            const q = query(collection(db, "products"), where("slug", "==", slug), limit(1));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const doc = querySnapshot.docs[0];
+                return { id: doc.id, ...doc.data() };
+            } else {
+                console.error("No such product with slug:", slug);
+                return null;
+            }
+        }
+
+        async function fetchRelatedProducts(currentProduct) {
+            if (!currentProduct || !currentProduct.category) return [];
+            
+            const q = query(
+                collection(db, "products"), 
+                where("category", "==", currentProduct.category),
+                where("isArchived", "==", false)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            const related = [];
+            querySnapshot.forEach((doc) => {
+                if (doc.id !== currentProduct.id) {
+                    related.push({ id: doc.id, ...doc.data() });
+                }
+            });
+            
+            return related.slice(0, 4);
+        }
+
+        // ===============================================================
+        // =================== RENDER FUNCTIONS ==========================
+        // ===============================================================
+
+        function renderProduct(product) {
+            updateMetaAndSchema(product);
+
+            // --- BREADCRUMB LOGIC (NEW: Cumulative links) ---
+            const breadcrumbContainer = document.getElementById('breadcrumb');
+            let breadcrumbHTML = `<a href="/index.html">Home</a> / <a href="/catalog.html">Catalog</a>`;
+            const params = new URLSearchParams();
+
+            if (product.category) {
+                params.set('category', product.category);
+                breadcrumbHTML += ` / <a href="/catalog.html?${params.toString()}">${product.category}</a>`;
+            }
+            if (product.country) {
+                params.set('country', product.country);
+                breadcrumbHTML += ` / <a href="/catalog.html?${params.toString()}">${product.country}</a>`;
+            }
+            if (product.region) {
+                params.set('region', product.region);
+                breadcrumbHTML += ` / <a href="/catalog.html?${params.toString()}">${product.region}</a>`;
+            }
+            if (product.appellation) {
+                params.set('appellation', product.appellation);
+                breadcrumbHTML += ` / <a href="/catalog.html?${params.toString()}">${product.appellation}</a>`;
+            }
+            
+            breadcrumbHTML += ` / <span>${product.name}</span>`;
+            breadcrumbContainer.innerHTML = breadcrumbHTML;
+
+            // --- RENDER MAIN INFO ---
+            document.getElementById('main-product-image').src = product.imageUrl;
+            document.getElementById('main-product-image').alt = product.name;
+            
+            const badgeEl = document.getElementById('product-badge');
+            if (product.badge) {
+                badgeEl.textContent = product.badge;
+                badgeEl.style.display = 'block';
+            } else {
+                badgeEl.style.display = 'none';
+            }
+
+            document.getElementById('product-category').textContent = product.category;
+            document.getElementById('product-title').textContent = product.name;
+            document.getElementById('product-description').textContent = product.description;
+
+            if (product.ratingValue && product.reviewCount) {
+                document.getElementById('product-rating').innerHTML = `
+                    <div class="stars">${generateStars(product.ratingValue)}</div>
+                    <span class="rating-value">${product.ratingValue}</span>
+                    <span class="rating-count">(${product.reviewCount} reviews)</span>
+                `;
+            }
+
+            // --- RENDER DETAILS ---
+            const detailsContainer = document.getElementById('product-details-list');
+            detailsContainer.innerHTML = ''; 
+            
+            const detailsOrder = [
+                { key: 'country', label: 'Country', icon: 'fa-globe-americas' },
+                { key: 'region', label: 'Region', icon: 'fa-map-marker-alt' },
+                { key: 'appellation', label: 'Appellation', icon: 'fa-award' },
+                { key: 'brand', label: 'Producer', icon: 'fa-industry' },
+                { key: 'year', label: 'Year', icon: 'fa-calendar-alt' },
+                { key: 'grapeVarieties', label: 'Grapes', icon: 'fa-wine-glass' },
+                { key: 'sweetness', label: 'Sweetness', icon: 'fa-tint' },
+                { key: 'alcohol', label: 'Alcohol', icon: 'fa-percentage', suffix: '%' },
+                { key: 'volume', label: 'Volume', icon: 'fa-wine-bottle' }
+            ];
+
+            detailsOrder.forEach(detail => {
+                if (product[detail.key]) {
+                    detailsContainer.innerHTML += `
+                        <div class="detail-item">
+                            <i class="fas ${detail.icon}"></i>
+                            <span>${detail.label}: ${product[detail.key]}${detail.suffix || ''}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (product.serving) {
+                product.serving.split('\n').forEach(line => {
+                    if (line.trim() === '') return;
+                    const [key, ...value] = line.split(':');
+                    let icon = 'fa-info-circle';
+                    if (key.toLowerCase().includes('temp')) icon = 'fa-thermometer-half';
+                    if (key.toLowerCase().includes('decan')) icon = 'fa-hourglass-half';
+                    detailsContainer.innerHTML += `<div class="detail-item"><i class="fas ${icon}"></i><span>${key}: ${value.join(':')}</span></div>`;
+                });
+            }
+
+            // --- RENDER PRICING & STOCK ---
+            const discount = product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : 0;
+            document.getElementById('product-pricing').innerHTML = `
+                <div class="current-price">$${product.price.toFixed(2)}</div>
+                ${product.oldPrice ? `
+                    <div>
+                        <span class="old-price">$${product.oldPrice.toFixed(2)}</span>
+                        <span class="discount">-${discount}%</span>
+                    </div>
+                ` : ''}
+            `;
+
+            const stockEl = document.getElementById('product-stock-status');
+            const cartBtn = document.getElementById('add-to-cart-btn');
+            stockEl.textContent = product.stockStatus || 'In Stock';
+            stockEl.className = 'stock-status';
+            if (product.stockStatus === 'In Stock') {
+                stockEl.classList.add('in-stock');
+                cartBtn.disabled = false;
+            } else if (product.stockStatus === 'Low Stock') {
+                stockEl.classList.add('low-stock');
+                cartBtn.disabled = false;
+            } else {
+                stockEl.classList.add('out-of-stock');
+                cartBtn.disabled = true;
+            }
+
+            // --- RENDER TABS ---
+            const tastingNotesTab = document.getElementById('tasting-notes-tab');
+            if (product.tastingNotes) {
+                const notesHTML = product.tastingNotes.split('\n').map(line => {
+                    const [key, ...value] = line.split(':');
+                    return `<li><strong>${key}:</strong> ${value.join(':').trim()}</li>`;
+                }).join('');
+                tastingNotesTab.innerHTML = `<h3>Tasting Notes</h3><ul class="tasting-notes-list">${notesHTML}</ul>`;
+            } else {
+                tastingNotesTab.innerHTML = '<h3>Tasting Notes</h3><p>No tasting notes available for this product.</p>';
+            }
+
+            const foodPairingTab = document.getElementById('food-pairing-tab');
+            if (product.foodPairing) {
+                foodPairingTab.innerHTML = `<h3>Food Pairing</h3><p class="food-pairing-content">${product.foodPairing.replace(/\n/g, '<br>')}</p>`;
+            } else {
+                foodPairingTab.innerHTML = '<h3>Food Pairing</h3><p>No food pairing recommendations available.</p>';
+            }
+            
+            document.getElementById('reviews-tab').innerHTML = '<h3>Customer Reviews</h3><p>No reviews yet for this product.</p>';
+        }
+
+        function renderRelatedProducts(products) {
+            const relatedGrid = document.getElementById('related-products-grid');
+            if (!products || products.length === 0) {
+                relatedGrid.innerHTML = '<p>No similar products found.</p>';
+                return;
+            }
+            relatedGrid.innerHTML = '';
+            products.forEach(p => {
+                const categorySlug = p.category.toLowerCase().replace(/\s+/g, '-');
+                relatedGrid.innerHTML += `
+                    <a href="/catalog/${categorySlug}/${p.slug}" class="related-product">
+                        <div class="related-product-image">
+                            <img src="${p.imageUrl}" alt="${p.name}">
+                        </div>
+                        <div class="related-product-info">
+                            <h3 class="related-product-title">${p.name}</h3>
+                            <div class="related-product-price">$${p.price.toFixed(2)}</div>
+                        </div>
+                    </a>
+                `;
+            });
+        }
+
+        // ===============================================================
+        // =================== EVENT LISTENERS ===========================
+        // ===============================================================
+
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.getElementById('main-nav');
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        const minusBtn = document.querySelector('.quantity-btn.minus');
+        const plusBtn = document.querySelector('.quantity-btn.plus');
+        const quantityInput = document.querySelector('.quantity-input');
+        minusBtn.addEventListener('click', () => {
+            let val = parseInt(quantityInput.value);
+            if (val > 1) quantityInput.value = val - 1;
+        });
+        plusBtn.addEventListener('click', () => {
+            quantityInput.value = parseInt(quantityInput.value) + 1;
+        });
+
+        document.querySelector('.tabs-header').addEventListener('click', e => {
+            const tabBtn = e.target.closest('.tab-btn');
+            if (tabBtn) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tabBtn.classList.add('active');
+                document.getElementById(`${tabBtn.dataset.tab}-tab`).classList.add('active');
+            }
+        });
+
+        // ===============================================================
+        // =================== INITIALIZATION ============================
+        // ===============================================================
+        
+        async function main() {
+            const productSlug = getProductSlugFromUrl();
+            if (!productSlug) {
+                document.querySelector('.product-section .container').innerHTML = '<h2>Product slug not found in URL.</h2><p>URL should be in format /catalog/category-name/product-name</p>';
+                return;
+            }
+
+            try {
+                const product = await fetchProductBySlug(productSlug);
+                
+                if (!product) {
+                    document.querySelector('.product-section .container').innerHTML = '<h2>Product not found.</h2>';
+                    return;
+                }
+                
+                const relatedProducts = await fetchRelatedProducts(product);
+
+                renderProduct(product);
+                renderRelatedProducts(relatedProducts);
+
+            } catch (error) {
+                console.error("Error loading product page:", error);
+                document.querySelector('.product-section .container').innerHTML = '<h2>Error loading product details. Please try again.</h2>';
+            }
+        }
+
+        main();
+    });
+    </script>
+</body>
+</html>
