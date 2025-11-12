@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Catalog - VinoElite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #c19a6b;
+            --primary-dark: #a67c52;
+            --primary-light: #e8c8a0;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --bg-light: #2d1b1b;
+            --text-light: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header (from index.html) */
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: 300; letter-spacing: 2px; color: var(--primary-light); text-decoration: none; }
+        .logo span { font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: color 0.3s ease; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary-light); }
+        .header-actions { display: flex; gap: 20px; }
+        .header-actions button { background: none; border: none; color: var(--text-light); font-size: 1.2rem; cursor: pointer; transition: color 0.3s ease; }
+        .header-actions button:hover { color: var(--primary-light); }
+        
+        /* Page Header */
+        .page-header { padding: 40px 0 20px; }
+        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .breadcrumb a:hover { color: var(--primary-light); }
+        .page-title { font-size: 2.5rem; font-weight: 300; letter-spacing: 1px; margin-bottom: 10px; }
+        
+        /* Catalog Layout */
+        .catalog-layout { display: flex; gap: 30px; padding: 30px 0 60px; align-items: flex-start; }
+        
+        /* Filters Sidebar */
+        .filters-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 110px; }
+        .filters-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .filters-title { font-size: 1.3rem; font-weight: 400; }
+        .reset-filters { background: none; border: none; color: var(--primary-color); font-size: 0.9rem; cursor: pointer; transition: color 0.3s ease; }
+        .reset-filters:hover { color: var(--primary-light); }
+        .filter-group { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .filter-title { font-size: 1.1rem; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .filter-content { max-height: 250px; overflow-y: auto; padding-right: 10px; }
+        .filter-option { margin-bottom: 12px; display: flex; align-items: center; transition: opacity 0.3s ease; }
+        .filter-option.disabled { opacity: 0.4; pointer-events: none; }
+        .filter-option input { margin-right: 10px; accent-color: var(--primary-color); }
+        .filter-option label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .option-count { color: var(--text-muted); font-size: 0.8rem; }
+
+        /* Price Filter Styles */
+        .price-filter-inputs { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .price-filter-inputs span { margin: 0 5px; }
+        .price-input { width: 80px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-light); padding: 5px; border-radius: 5px; text-align: center; }
+        .price-slider-container { position: relative; height: 5px; background: rgba(255,255,255,0.2); border-radius: 5px; }
+        .price-slider-range { position: absolute; height: 100%; background: var(--primary-color); border-radius: 5px; }
+        .price-slider-container input[type=range] { position: absolute; width: 100%; height: 5px; background: none; pointer-events: none; -webkit-appearance: none; margin: 0; }
+        .price-slider-container input[type=range]::-webkit-slider-thumb { height: 15px; width: 15px; border-radius: 50%; background: var(--primary-light); border: 2px solid var(--primary-color); cursor: pointer; pointer-events: auto; -webkit-appearance: none; }
+        
+        /* Products Section */
+        .products-section { flex: 1; min-width: 0; }
+        .products-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .products-count { color: var(--text-muted); }
+        .toolbar-actions { display: flex; align-items: center; gap: 20px; }
+        .sort-options { display: flex; align-items: center; gap: 10px; }
+        .sort-select { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); border-radius: 5px; padding: 8px 12px; color: var(--text-light); cursor: pointer; }
+        .view-toggle button { background: none; border: 1px solid var(--border-color); color: var(--text-muted); width: 38px; height: 38px; border-radius: 5px; cursor: pointer; transition: all 0.3s ease; }
+        .view-toggle button.active, .view-toggle button:hover { color: var(--text-light); background: rgba(255, 255, 255, 0.1); }
+        
+        /* Active Filters */
+        .active-filters-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+        .filter-pill { background: var(--primary-color); color: var(--bg-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .filter-pill button { background: none; border: none; color: var(--bg-dark); opacity: 0.7; cursor: pointer; font-size: 1rem; }
+        .filter-pill button:hover { opacity: 1; }
+
+        /* Products Grid & List */
+        .products-grid { display: grid; gap: 25px; }
+        .products-grid.grid-view { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .products-grid.list-view { grid-template-columns: 1fr; }
+
+        .product-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border-radius: 15px; overflow: hidden; transition: transform 0.3s ease, box-shadow 0.3s ease; border: 1px solid var(--border-color); text-decoration: none; color: var(--text-light); display: flex; flex-direction: column; }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
+        
+        .slideshow-container {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, var(--bg-light), var(--bg-dark));
+            aspect-ratio: 3 / 4;
+            width: 100%;
+        }
+        .slideshow-container:hover .slideshow-item.active img {
+            transform: scale(1.05);
+        }
+        .slideshow-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            pointer-events: none;
+        }
+        .slideshow-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .slideshow-item.active {
+            opacity: 1;
+        }
+        .slideshow-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: grab;
+        }
+        .product-badge { position: absolute; top: 15px; right: 15px; background: var(--primary-color); color: var(--bg-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; z-index: 3; }
+        
+        .list-view .slideshow-container {
+            width: 200px;
+            height: calc(200px * 4 / 3); /* Сохраняем пропорции */
+            flex-shrink: 0;
+        }
+        
+        .product-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .product-subtitle { font-size: 0.8rem; color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .product-name { font-size: 1.3rem; margin-bottom: 10px; font-weight: 400; letter-spacing: 1px; }
+        .product-price { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .price { font-size: 1.5rem; font-weight: 300; color: var(--primary-light); }
+        .old-price { font-size: 1rem; text-decoration: line-through; color: var(--text-muted); }
+        
+        .grid-view .product-info { justify-content: space-between; }
+        .list-view .product-card { flex-direction: row; align-items: center; }
+        .list-view .product-info { justify-content: center; }
+        
+        .product-description {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            line-height: 1.5;
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .add-to-cart { background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: auto; }
+        .add-to-cart:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        
+        /* Load More */
+        .load-more-container { text-align: center; margin-top: 50px; }
+        .load-more-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); color: var(--text-light); padding: 15px 40px; border-radius: 30px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
+        .load-more-btn:hover { background: var(--primary-color); color: var(--bg-dark); }
+        .load-more-btn:disabled { display: none; }
+
+        /* Mobile Filters */
+        .mobile-filters-btn { display: none; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; align-items: center; gap: 8px; margin-bottom: 20px; width: 100%; justify-content: center; }
+        .mobile-filters-btn:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); }
+        
+        /* Footer (from index.html) */
+        footer { background: var(--bg-darker); padding: 60px 0 30px; border-top: 1px solid var(--border-color); }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-column h3 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; color: var(--text-light); text-decoration: none; transition: all 0.3s ease; }
+        .social-links a:hover { background: var(--primary-color); color: var(--bg-dark); transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; z-index: 1001; }
+        
+        /* Responsive Styles */
+        @media (max-width: 1200px) {
+            .catalog-layout { flex-direction: column; }
+            .filters-sidebar { width: 100%; position: static; display: none; }
+            .filters-sidebar.active { display: block; }
+            .mobile-filters-btn { display: flex; }
+        }
+        @media (max-width: 768px) {
+            .header-actions { display: none; }
+            .mobile-menu-btn { display: block; }
+            .nav-links {
+                display: none; flex-direction: column; position: absolute; top: 75px; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); padding: 20px; border-bottom: 1px solid var(--border-color);
+            }
+            .nav-links.active { display: flex; }
+            .products-toolbar { flex-direction: column; align-items: flex-start; }
+            .toolbar-actions { width: 100%; justify-content: space-between; }
+        }
+        @media (max-width: 576px) {
+            .page-title { font-size: 2rem; }
+            .products-grid.grid-view { grid-template-columns: 1fr; }
+            .list-view .product-card { flex-direction: column; }
+            .list-view .slideshow-container { width: 100%; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header (from index.html) -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                <nav class="nav-links" id="main-nav">
+                    <a href="/index.html">Home</a>
+                    <a href="/catalog.html" class="active">Catalog</a>
+                    <a href="#">Collections</a>
+                    <a href="#">Wineries</a>
+                    <a href="#">About Us</a>
+                </nav>
+                <div class="header-actions">
+                    <button><i class="fas fa-search"></i></button>
+                    <button><i class="far fa-user"></i></button>
+                    <button><i class="fas fa-shopping-cart"></i></button>
+                </div>
+                <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <div class="breadcrumb" id="breadcrumb-container">
+                <!-- Breadcrumbs will be dynamically inserted here -->
+            </div>
+            <h1 class="page-title">Wine Catalog</h1>
+        </div>
+    </section>
+
+    <!-- Catalog Layout -->
+    <div class="container">
+        <button class="mobile-filters-btn">
+            <i class="fas fa-filter"></i>
+            <span>Show Filters</span>
+        </button>
+        
+        <div class="catalog-layout">
+            <!-- Filters Sidebar -->
+            <aside class="filters-sidebar">
+                <div class="filters-header">
+                    <h2 class="filters-title">Filters</h2>
+                    <button class="reset-filters">Reset All</button>
+                </div>
+                
+                <div id="filters-container">
+                    <!-- All filter groups will be dynamically inserted here -->
+                </div>
+            </aside>
+            
+            <!-- Products Section -->
+            <section class="products-section">
+                <div class="products-toolbar">
+                    <div class="products-count">Loading wines...</div>
+                    <div class="toolbar-actions">
+                        <div class="sort-options">
+                            <select class="sort-select" id="sort-select">
+                                <option value="popularity">Popularity</option>
+                                <option value="price-asc">Price (low to high)</option>
+                                <option value="price-desc">Price (high to low)</option>
+                                <option value="name-asc">Name (A-Z)</option>
+                            </select>
+                        </div>
+                        <div class="view-toggle">
+                            <button id="grid-view-btn" class="active"><i class="fas fa-th-large"></i></button>
+                            <button id="list-view-btn"><i class="fas fa-list"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="active-filters-container" id="active-filters-container">
+                    <!-- Active filter pills will be inserted here -->
+                </div>
+                
+                <div class="products-grid grid-view" id="products-grid">
+                    <!-- Product cards will be dynamically inserted here -->
+                </div>
+                
+                <div class="load-more-container">
+                    <button class="load-more-btn" id="load-more-btn">Load More</button>
+                </div>
+            </section>
+        </div>
+    </div>
+    
+    <!-- Footer (from index.html) -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>VinoElite</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Shipping & Payment</a></li>
+                        <li><a href="#">Returns</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Catalog</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Red Wines</a></li>
+                        <li><a href="#">White Wines</a></li>
+                        <li><a href="#">Sparkling Wines</a></li>
+                        <li><a href="#">Spirits</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Help</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacts</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                        <li><i class="fas fa-envelope"></i> info@vinoelite.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li>
+                    </ul>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 VinoElite. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+    // ===============================================================
+    // =================== FIREBASE INITIALIZATION ===================
+    // ===============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+      authDomain: "wine-91d0e.firebaseapp.com",
+      projectId: "wine-91d0e",
+      storageBucket: "wine-91d0e.firebasestorage.app",
+      messagingSenderId: "1021620433427",
+      appId: "1:1021620433427:web:5439252fb350c4455a85e6",
+      measurementId: "G-TRWHY3KXK1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ===============================================================
+    // =================== MAIN CATALOG SCRIPT =======================
+    // ===============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        let allProducts = [];
+        let filteredProducts = [];
+        let displayedProductsCount = 0;
+        const PRODUCTS_PER_PAGE = 12;
+
+        // ===== ИЗМЕНЕНИЕ 1: Определяем списки категорий сладости =====
+        const stillWineSweetnessOptions = ['Dry', 'Semi-Dry', 'Semi-Sweet', 'Sweet'];
+        const sparklingWineSweetnessOptions = ['Brut Nature', 'Extra Brut', 'Brut', 'Extra-Dry', 'Dry / Sec', 'Demi-Sec', 'Doux'];
+
+        const state = {
+            filters: {
+                category: [], country: [], region: [], appellation: [],
+                grapeVarieties: [], sweetness: [], volume: [], year: [],
+                price: { min: 0, max: 9999 }
+            },
+            sorting: 'popularity'
+        };
+
+        // DOM Elements
+        const productsGrid = document.getElementById('products-grid');
+        const productsCountEl = document.querySelector('.products-count');
+        const filtersContainer = document.getElementById('filters-container');
+        const sortSelect = document.getElementById('sort-select');
+        const resetFiltersBtn = document.querySelector('.reset-filters');
+        const breadcrumbContainer = document.getElementById('breadcrumb-container');
+        const activeFiltersContainer = document.getElementById('active-filters-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+
+        // ===============================================================
+        // ===== ИЗМЕНЕНИЕ: ИСПРАВЛЕННАЯ МЕХАНИКА СЛАЙД-ШОУ ==============
+        // ===============================================================
+        function setupSlideshow(container) {
+            if (!container) return;
+            const slides = Array.from(container.querySelectorAll('.slideshow-item'));
+            if (slides.length <= 1) {
+                if (slides.length === 1) slides[0].classList.add('active');
+                return;
+            }
+            if (container.querySelector('.slideshow-overlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'slideshow-overlay';
+            container.appendChild(overlay);
+
+            let currentIndex = 0;
+            let intervalId = setInterval(() => showSlide(currentIndex + 1), 4000);
+
+            function showSlide(index) {
+                const oldSlide = slides[currentIndex];
+                if (oldSlide) oldSlide.classList.remove('active');
+                currentIndex = (index + slides.length) % slides.length;
+                const newSlide = slides[currentIndex];
+                if (newSlide) setTimeout(() => newSlide.classList.add('active'), 50);
+            }
+
+            function manualSlide(direction) {
+                clearInterval(intervalId);
+                showSlide(currentIndex + direction);
+                intervalId = setInterval(() => showSlide(currentIndex + 1), 5000);
+            }
+
+            let touchStartX = 0;
+            overlay.addEventListener('mousedown', e => {
+                touchStartX = e.clientX;
+                overlay.style.cursor = 'grabbing';
+                clearInterval(intervalId);
+            });
+            overlay.addEventListener('mouseup', e => {
+                overlay.style.cursor = 'grab';
+                if (e.clientX < touchStartX - 50) {
+                    manualSlide(1);
+                } else if (e.clientX > touchStartX + 50) {
+                    manualSlide(-1);
+                } else {
+                    // Если это был просто клик, а не свайп, перезапускаем таймер
+                    intervalId = setInterval(() => showSlide(currentIndex + 1), 5000);
+                }
+            });
+            overlay.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+                clearInterval(intervalId);
+            }, { passive: true });
+            overlay.addEventListener('touchend', e => {
+                let touchEndX = e.changedTouches[0].clientX;
+                if (touchEndX < touchStartX - 50) {
+                    manualSlide(1);
+                } else if (touchEndX > touchStartX + 50) {
+                    manualSlide(-1);
+                } else {
+                    // Если это был просто клик, а не свайп, перезапускаем таймер
+                    intervalId = setInterval(() => showSlide(currentIndex + 1), 5000);
+                }
+            });
+            showSlide(0);
+        }
+
+        // ===============================================================
+        // =================== DATA FETCHING =============================
+        // ===============================================================
+        async function fetchProducts() {
+            try {
+                const q = query(collection(db, "products"), where("isArchived", "==", false));
+                const querySnapshot = await getDocs(q);
+                allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                main();
+            } catch (error) {
+                console.error("Error fetching products: ", error);
+                productsGrid.innerHTML = '<p>Error loading products. Please try again later.</p>';
+            }
+        }
+
+        // ===============================================================
+        // =================== CORE LOGIC ================================
+        // ===============================================================
+        function main() {
+            parseUrlParams();
+            renderFilters();
+            addEventListeners();
+            validateAndCleanFilters();
+            runFilterAndSort();
+        }
+
+        function runFilterAndSort() {
+            applyFilters();
+            applySorting();
+            updateURL();
+            renderAll();
+            updateDependentFilters();
+        }
+
+        function applyFilters() {
+            filteredProducts = allProducts.filter(product => {
+                if (product.price < state.filters.price.min || product.price > state.filters.price.max) {
+                    return false;
+                }
+                return Object.keys(state.filters).every(filterKey => {
+                    if (filterKey === 'price') return true;
+                    const selectedValues = state.filters[filterKey];
+                    if (selectedValues.length === 0) return true;
+                    const productValue = product[filterKey];
+                    if (!productValue) return false;
+                    if (filterKey === 'grapeVarieties') {
+                        const productGrapes = productValue.split(',').map(g => g.trim());
+                        return selectedValues.some(v => productGrapes.includes(v));
+                    }
+                    return selectedValues.includes(String(productValue));
+                });
+            });
+        }
+
+        function applySorting() {
+            state.sorting = sortSelect.value;
+            switch (state.sorting) {
+                case 'price-asc':
+                    filteredProducts.sort((a, b) => a.price - b.price);
+                    break;
+                case 'price-desc':
+                    filteredProducts.sort((a, b) => b.price - a.price);
+                    break;
+                case 'name-asc':
+                    filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+                    break;
+            }
+        }
+        
+        function validateAndCleanFilters() {
+            const { country, region, appellation } = state.filters;
+            if (country.length > 0 && region.length > 0) {
+                const validRegionsForSelectedCountries = new Set(
+                    allProducts
+                        .filter(p => country.includes(p.country) && p.region)
+                        .map(p => p.region)
+                );
+                const originalRegions = [...region];
+                state.filters.region = region.filter(r => validRegionsForSelectedCountries.has(r));
+                originalRegions
+                    .filter(r => !state.filters.region.includes(r))
+                    .forEach(r => {
+                        const checkbox = document.getElementById(`filter-region-${generateSlug(r)}`);
+                        if (checkbox) checkbox.checked = false;
+                    });
+            }
+            if (appellation.length > 0) {
+                let relevantProducts = allProducts;
+                if (state.filters.region.length > 0) {
+                    relevantProducts = relevantProducts.filter(p => state.filters.region.includes(p.region));
+                } else if (country.length > 0) {
+                    relevantProducts = relevantProducts.filter(p => country.includes(p.country));
+                }
+                const validAppellations = new Set(
+                    relevantProducts
+                        .filter(p => p.appellation)
+                        .map(p => p.appellation)
+                );
+                const originalAppellations = [...appellation];
+                state.filters.appellation = appellation.filter(a => validAppellations.has(a));
+                originalAppellations
+                    .filter(a => !state.filters.appellation.includes(a))
+                    .forEach(a => {
+                        const checkbox = document.getElementById(`filter-appellation-${generateSlug(a)}`);
+                        if (checkbox) checkbox.checked = false;
+                    });
+            }
+        }
+
+        // ===============================================================
+        // =================== RENDER FUNCTIONS ==========================
+        // ===============================================================
+        function renderAll() {
+            renderBreadcrumbs();
+            renderActiveFilters();
+            renderProducts(true);
+        }
+
+        function renderProducts(reset = false) {
+            if (reset) {
+                productsGrid.innerHTML = '';
+                displayedProductsCount = 0;
+            }
+
+            const productsToRender = filteredProducts.slice(displayedProductsCount, displayedProductsCount + PRODUCTS_PER_PAGE);
+
+            if (productsToRender.length === 0 && reset) {
+                productsGrid.innerHTML = '<p>No products match your criteria.</p>';
+            }
+
+            productsToRender.forEach(prod => {
+                const categorySlug = generateSlug(prod.category);
+                const productUrl = `/catalog/${categorySlug}/${prod.slug}`;
+                const card = document.createElement('a');
+                card.href = productUrl;
+                card.className = 'product-card';
+
+                let subtitle = '';
+                const mainInfo = [prod.category, prod.sweetness].filter(Boolean).join(' ');
+                const originInfo = [prod.region, prod.country].filter(Boolean).join(', ');
+                if (mainInfo) subtitle += mainInfo;
+                if (originInfo) subtitle += (subtitle ? ' from ' : '') + originInfo;
+                const description = prod.metaDescription || prod.description || '';
+
+                const imageUrls = (prod.imageUrls && Array.isArray(prod.imageUrls) && prod.imageUrls.length > 0)
+                    ? prod.imageUrls
+                    : [prod.imageUrl];
+                
+                const slidesHTML = imageUrls.map((url, index) => `
+                    <div class="slideshow-item">
+                        <img src="${url}" alt="${prod.name} view ${index + 1}">
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="slideshow-container">
+                        ${slidesHTML}
+                        ${prod.badge ? `<div class="product-badge">${prod.badge}</div>` : ''}
+                    </div>
+                    <div class="product-info">
+                        <div>
+                            <div class="product-subtitle">${subtitle}</div>
+                            <h3 class="product-name">${prod.name}</h3>
+                            <p class="product-description">${description}</p>
+                        </div>
+                        <div class="product-price">
+                            <div class="price">$${prod.price.toFixed(2)}</div>
+                            ${prod.oldPrice ? `<div class="old-price">$${prod.oldPrice.toFixed(2)}</div>` : ''}
+                        </div>
+                        <button class="add-to-cart" onclick="event.preventDefault(); alert('Added to cart!');"><i class="fas fa-shopping-cart"></i> Add to Cart</button>
+                    </div>
+                `;
+                productsGrid.appendChild(card);
+            });
+
+            productsGrid.querySelectorAll('.slideshow-container').forEach(setupSlideshow);
+
+            displayedProductsCount += productsToRender.length;
+            productsCountEl.textContent = `Showing ${displayedProductsCount} of ${filteredProducts.length} wines`;
+            loadMoreBtn.style.display = displayedProductsCount < filteredProducts.length ? 'inline-block' : 'none';
+        }
+
+        function renderBreadcrumbs() {
+            let html = `<a href="/catalog.html">Catalog</a>`;
+            const filterHierarchy = ['category', 'country', 'region', 'appellation'];
+            let tempFilters = {};
+            
+            filterHierarchy.forEach(key => {
+                if (state.filters[key] && state.filters[key].length > 0) {
+                    const value = state.filters[key].join(', ');
+                    tempFilters[key] = state.filters[key].join(',');
+                    const params = new URLSearchParams(tempFilters);
+                    html += ` / <a href="/catalog.html?${params.toString()}">${value}</a>`;
+                }
+            });
+            breadcrumbContainer.innerHTML = html;
+        }
+
+        function renderActiveFilters() {
+            activeFiltersContainer.innerHTML = '';
+            Object.keys(state.filters).forEach(key => {
+                if (key === 'price') return;
+                state.filters[key].forEach(value => {
+                    const pill = document.createElement('div');
+                    pill.className = 'filter-pill';
+                    pill.innerHTML = `
+                        <span>${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}</span>
+                        <button data-key="${key}" data-value="${value}">&times;</button>
+                    `;
+                    activeFiltersContainer.appendChild(pill);
+                });
+            });
+        }
+
+        // ===============================================================
+        // =================== INITIALIZATION & UTILS ====================
+        // ===============================================================
+        
+        // ===== ИЗМЕНЕНИЕ 2: Новая функция для рендеринга фильтра сладости =====
+        function renderSweetnessFilter() {
+            const selectedCategories = state.filters.category;
+            let relevantSweetnessOptions;
+
+            if (selectedCategories.length === 0) {
+                // По умолчанию показываем опции для тихих вин
+                relevantSweetnessOptions = stillWineSweetnessOptions;
+            } else {
+                const hasSparkling = selectedCategories.some(cat => cat.toLowerCase().includes('sparkling'));
+                const hasStill = selectedCategories.some(cat => !cat.toLowerCase().includes('sparkling'));
+
+                if (hasSparkling && !hasStill) {
+                    // Если выбраны только игристые категории
+                    relevantSweetnessOptions = sparklingWineSweetnessOptions;
+                } else if (hasStill && !hasSparkling) {
+                    // Если выбраны только тихие категории
+                    relevantSweetnessOptions = stillWineSweetnessOptions;
+                } else {
+                    // Если выбрана смесь категорий (или какая-то неизвестная)
+                    relevantSweetnessOptions = [...new Set([...stillWineSweetnessOptions, ...sparklingWineSweetnessOptions])];
+                }
+            }
+
+            const allSweetnessValuesInCatalog = getUniqueValues('sweetness', allProducts);
+            const optionsToRender = relevantSweetnessOptions.filter(opt => allSweetnessValuesInCatalog.has(opt));
+
+            const container = document.querySelector('#sweetness-filter-group .filter-content');
+            if (!container) return;
+
+            let optionsHTML = '';
+            optionsToRender.forEach(option => {
+                const isChecked = state.filters.sweetness.includes(option);
+                optionsHTML += `
+                    <div class="filter-option">
+                        <input type="checkbox" id="filter-sweetness-${generateSlug(option)}" value="${option}" data-key="sweetness" ${isChecked ? 'checked' : ''}>
+                        <label for="filter-sweetness-${generateSlug(option)}">
+                            <span>${option}</span>
+                        </label>
+                    </div>
+                `;
+            });
+            container.innerHTML = optionsHTML;
+        }
+
+        // ===== ИЗМЕНЕНИЕ 3: Модифицируем `renderFilters` для поддержки динамического фильтра =====
+        function renderFilters() {
+            const filterDefinitions = [
+                { key: 'category', title: 'Category' }, { key: 'country', title: 'Country' },
+                { key: 'region', title: 'Region' }, { key: 'appellation', title: 'Appellation' },
+                { key: 'grapeVarieties', title: 'Grape' }, { key: 'sweetness', title: 'Sweetness' },
+                { key: 'volume', title: 'Volume' }, { key: 'year', title: 'Year' }
+            ];
+
+            filtersContainer.innerHTML = '';
+            renderPriceFilter();
+            
+            filterDefinitions.forEach(({key, title}) => {
+                if (key === 'sweetness') {
+                    // Создаем контейнер для динамического фильтра сладости
+                    const group = document.createElement('div');
+                    group.className = 'filter-group';
+                    group.dataset.filterGroup = 'sweetness';
+                    group.id = 'sweetness-filter-group';
+                    group.innerHTML = `
+                        <div class="filter-title"><span>${title}</span></div>
+                        <div class="filter-content"><!-- Контент будет отрисован динамически --></div>
+                    `;
+                    filtersContainer.appendChild(group);
+                } else {
+                    // Стандартная логика для всех остальных фильтров
+                    const options = getUniqueValues(key, allProducts);
+                    if (options.size === 0) return;
+
+                    const group = document.createElement('div');
+                    group.className = 'filter-group';
+                    group.dataset.filterGroup = key;
+                    let optionsHTML = '';
+                    [...options].sort().forEach(option => {
+                        const isChecked = state.filters[key] && state.filters[key].includes(option);
+                        optionsHTML += `
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-${key}-${generateSlug(option)}" value="${option}" data-key="${key}" ${isChecked ? 'checked' : ''}>
+                                <label for="filter-${key}-${generateSlug(option)}">
+                                    <span>${option}</span>
+                                </label>
+                            </div>
+                        `;
+                    });
+                    group.innerHTML = `
+                        <div class="filter-title"><span>${title}</span></div>
+                        <div class="filter-content">${optionsHTML}</div>
+                    `;
+                    filtersContainer.appendChild(group);
+                }
+            });
+            
+            // Первый рендеринг фильтра сладости после создания всех контейнеров
+            renderSweetnessFilter();
+        }
+
+
+        function renderPriceFilter() {
+            const prices = allProducts.map(p => p.price);
+            const minPrice = Math.floor(Math.min(...prices));
+            const maxPrice = Math.ceil(Math.max(...prices));
+            state.filters.price.min = minPrice;
+            state.filters.price.max = maxPrice;
+
+            const group = document.createElement('div');
+            group.className = 'filter-group';
+            group.innerHTML = `
+                <div class="filter-title"><span>Price</span></div>
+                <div class="filter-content">
+                    <div class="price-filter-inputs">
+                        <span id="price-min-label">$${minPrice}</span>
+                        <span>-</span>
+                        <span id="price-max-label">$${maxPrice}</span>
+                    </div>
+                    <div class="price-slider-container">
+                        <div class="price-slider-range"></div>
+                        <input type="range" id="price-slider-min" min="${minPrice}" max="${maxPrice}" value="${minPrice}">
+                        <input type="range" id="price-slider-max" min="${minPrice}" max="${maxPrice}" value="${maxPrice}">
+                    </div>
+                </div>
+            `;
+            filtersContainer.appendChild(group);
+        }
+        
+        function updateDependentFilters() {
+            let availableProducts = allProducts.filter(product => {
+                return Object.keys(state.filters).every(filterKey => {
+                    if (['region', 'appellation'].includes(filterKey)) return true;
+                    if (filterKey === 'price') return product.price >= state.filters.price.min && product.price <= state.filters.price.max;
+                    
+                    const selectedValues = state.filters[filterKey];
+                    if (selectedValues.length === 0) return true;
+                    
+                    const productValue = product[filterKey];
+                    if (!productValue) return false;
+                    
+                    if (filterKey === 'grapeVarieties') {
+                        return selectedValues.some(v => product.grapeVarieties.split(',').map(g=>g.trim()).includes(v));
+                    }
+                    return selectedValues.includes(String(productValue));
+                });
+            });
+
+            const selectedCountries = state.filters.country;
+            let regionProducts = selectedCountries.length > 0 ? availableProducts.filter(p => selectedCountries.includes(p.country)) : availableProducts;
+            const availableRegions = getUniqueValues('region', regionProducts);
+            updateOptionsVisibility('region', availableRegions);
+
+            const selectedRegions = state.filters.region;
+            let appellationProducts = selectedRegions.length > 0 ? regionProducts.filter(p => selectedRegions.includes(p.region)) : regionProducts;
+            const availableAppellations = getUniqueValues('appellation', appellationProducts);
+            updateOptionsVisibility('appellation', availableAppellations);
+        }
+
+        function updateOptionsVisibility(filterKey, availableOptions) {
+            const filterGroup = document.querySelector(`[data-filter-group="${filterKey}"]`);
+            if (!filterGroup) return;
+            const optionElements = filterGroup.querySelectorAll('.filter-option');
+            optionElements.forEach(opt => {
+                const input = opt.querySelector('input');
+                if (availableOptions.has(input.value)) {
+                    opt.classList.remove('disabled');
+                } else {
+                    opt.classList.add('disabled');
+                }
+            });
+        }
+
+        function getUniqueValues(key, productList) {
+            const values = new Set();
+            productList.forEach(product => {
+                if (product[key]) {
+                    if (key === 'grapeVarieties') {
+                        product[key].split(',').forEach(grape => values.add(grape.trim()));
+                    } else {
+                        values.add(String(product[key]));
+                    }
+                }
+            });
+            return values;
+        }
+
+        function generateSlug(text) {
+            if (!text) return '';
+            return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+        }
+
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            params.forEach((value, key) => {
+                if (state.filters[key] !== undefined && key !== 'price') {
+                    state.filters[key] = value.split(',');
+                }
+            });
+        }
+
+        function updateURL() {
+            const params = new URLSearchParams();
+            Object.keys(state.filters).forEach(key => {
+                if (key !== 'price' && state.filters[key].length > 0) {
+                    params.set(key, state.filters[key].join(','));
+                }
+            });
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            history.pushState({}, '', newUrl);
+        }
+
+        // ===============================================================
+        // =================== EVENT LISTENERS ===========================
+        // ===============================================================
+        function addEventListeners() {
+            filtersContainer.addEventListener('change', e => {
+                if (e.target.type === 'checkbox') {
+                    const key = e.target.dataset.key;
+                    const value = e.target.value;
+                    if (e.target.checked) {
+                        state.filters[key].push(value);
+                    } else {
+                        state.filters[key] = state.filters[key].filter(v => v !== value);
+                    }
+                    
+                    // ===== ИЗМЕНЕНИЕ 4: Вызываем перерисовку фильтра сладости при смене категории =====
+                    if (key === 'category') {
+                        renderSweetnessFilter();
+                    }
+
+                    validateAndCleanFilters();
+                    runFilterAndSort();
+                }
+            });
+            
+            filtersContainer.addEventListener('input', e => {
+                if (e.target.id === 'price-slider-min' || e.target.id === 'price-slider-max') {
+                    const minSlider = document.getElementById('price-slider-min');
+                    const maxSlider = document.getElementById('price-slider-max');
+                    let minVal = parseInt(minSlider.value);
+                    let maxVal = parseInt(maxSlider.value);
+
+                    if (maxVal < minVal) {
+                        [minVal, maxVal] = [maxVal, minVal];
+                        minSlider.value = minVal;
+                        maxSlider.value = maxVal;
+                    }
+                    
+                    state.filters.price.min = minVal;
+                    state.filters.price.max = maxVal;
+
+                    document.getElementById('price-min-label').textContent = `$${minVal}`;
+                    document.getElementById('price-max-label').textContent = `$${maxVal}`;
+                    
+                    const range = maxSlider.max - maxSlider.min;
+                    const minPercent = ((minVal - minSlider.min) / range) * 100;
+                    const maxPercent = ((maxVal - minSlider.min) / range) * 100;
+                    const sliderRange = document.querySelector('.price-slider-range');
+                    sliderRange.style.left = `${minPercent}%`;
+                    sliderRange.style.width = `${maxPercent - minPercent}%`;
+                }
+            });
+
+            filtersContainer.addEventListener('change', e => {
+                 if (e.target.id === 'price-slider-min' || e.target.id === 'price-slider-max') {
+                    runFilterAndSort();
+                 }
+            });
+
+            activeFiltersContainer.addEventListener('click', e => {
+                if (e.target.tagName === 'BUTTON') {
+                    const key = e.target.dataset.key;
+                    const value = e.target.dataset.value;
+                    state.filters[key] = state.filters[key].filter(v => v !== value);
+                    const checkbox = document.getElementById(`filter-${key}-${generateSlug(value)}`);
+                    if (checkbox) checkbox.checked = false;
+
+                    // Если удалили категорию, тоже обновляем фильтр сладости
+                    if (key === 'category') {
+                        renderSweetnessFilter();
+                    }
+
+                    validateAndCleanFilters();
+                    runFilterAndSort();
+                }
+            });
+
+            sortSelect.addEventListener('change', runFilterAndSort);
+
+            resetFiltersBtn.addEventListener('click', () => {
+                Object.keys(state.filters).forEach(key => {
+                    if (key !== 'price') state.filters[key] = [];
+                });
+                document.querySelectorAll('#filters-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+                
+                // После сброса категорий, обновляем фильтр сладости
+                renderSweetnessFilter();
+
+                const minSlider = document.getElementById('price-slider-min');
+                const maxSlider = document.getElementById('price-slider-max');
+                if (minSlider && maxSlider) {
+                    minSlider.value = minSlider.min;
+                    maxSlider.value = maxSlider.max;
+                    minSlider.dispatchEvent(new Event('input'));
+                    maxSlider.dispatchEvent(new Event('change'));
+                } else {
+                    runFilterAndSort();
+                }
+            });
+
+            document.getElementById('grid-view-btn').addEventListener('click', () => {
+                productsGrid.classList.remove('list-view');
+                productsGrid.classList.add('grid-view');
+                document.getElementById('grid-view-btn').classList.add('active');
+                document.getElementById('list-view-btn').classList.remove('active');
+            });
+            document.getElementById('list-view-btn').addEventListener('click', () => {
+                productsGrid.classList.remove('grid-view');
+                productsGrid.classList.add('list-view');
+                document.getElementById('list-view-btn').classList.add('active');
+                document.getElementById('grid-view-btn').classList.remove('active');
+            });
+
+            loadMoreBtn.addEventListener('click', () => renderProducts(false));
+
+            document.querySelector('.mobile-filters-btn').addEventListener('click', () => {
+                const sidebar = document.querySelector('.filters-sidebar');
+                sidebar.classList.toggle('active');
+                const btnText = sidebar.classList.contains('active') ? 'Hide Filters' : 'Show Filters';
+                document.querySelector('.mobile-filters-btn span').textContent = btnText;
+            });
+
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const navLinks = document.getElementById('main-nav');
+            mobileMenuBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+        }
+
+        // --- Start the process ---
+        fetchProducts();
+    });
+    </script>
+</body>
+</html>
