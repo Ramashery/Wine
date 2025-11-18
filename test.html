@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Auth Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 2em; }
+        #status { font-weight: bold; }
+        #error-details { background-color: #fdd; border: 1px solid #f00; padding: 1em; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+    <h1>Тест аутентификации Firebase</h1>
+    <p>Эта страница проверяет только функцию входа через Google.</p>
+
+    <button id="google-signin-btn">Войти через Google</button>
+
+    <hr>
+
+    <h2>Результат:</h2>
+    <p id="status">Ожидание действия...</p>
+    <pre id="error-details" style="display:none;"></pre>
+
+
+    <script type="module">
+        // 1. Конфигурация Firebase (скопирована из вашего файла)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+          authDomain: "wine-91d0e.firebaseapp.com",
+          projectId: "wine-91d0e",
+          storageBucket: "wine-91d0e.firebasestorage.app",
+          messagingSenderId: "1021620433427",
+          appId: "1:1021620433427:web:5439252fb350c4455a85e6",
+          measurementId: "G-TRWHY3KXK1"
+        };
+
+        // 2. Инициализация Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // 3. Получение элементов со страницы
+        const signInButton = document.getElementById('google-signin-btn');
+        const statusElement = document.getElementById('status');
+        const errorDetailsElement = document.getElementById('error-details');
+
+        // 4. Проверка статуса авторизации при загрузке страницы
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                statusElement.textContent = 'Состояние: Пользователь уже вошел в систему. Email: ' + user.email;
+                signInButton.disabled = true;
+            } else {
+                statusElement.textContent = 'Состояние: Пользователь не вошел в систему.';
+            }
+        });
+
+        // 5. Логика для кнопки входа
+        signInButton.addEventListener('click', async () => {
+            statusElement.textContent = 'Попытка входа...';
+            errorDetailsElement.style.display = 'none';
+            errorDetailsElement.textContent = '';
+
+            try {
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+                console.log("Успешный вход:", user);
+                statusElement.textContent = 'УСПЕХ! Вы вошли как: ' + user.email;
+            } catch (error) {
+                // Это самая важная часть для диагностики
+                console.error("Ошибка аутентификации:", error);
+                statusElement.textContent = 'ОШИБКА! Код ошибки: ' + error.code;
+                errorDetailsElement.textContent = `Полное сообщение: ${error.message}\n\nПолный объект ошибки:\n${JSON.stringify(error, null, 2)}`;
+                errorDetailsElement.style.display = 'block';
+            }
+        });
+    </script>
+
+</body>
+</html>
