@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect to external services for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>Wine Catalog | VinoElite</title>
+    <meta name="description" content="Explore the exclusive collection of wines at VinoElite.">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Wine Catalog | VinoElite" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="Explore the exclusive collection of wines at VinoElite." />
+    <meta property="og:image" content="https://vinoelite.com/images/default-og-image.jpg" />
+    <meta property="og:url" content="https://vinoelite.com/catalog.html" />
+    <meta property="og:site_name" content="VinoElite" />
+    
+    <!-- Schema.org -->
+    <script type="application/ld+json" id="schema-json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Wine Catalog",
+      "description": "Explore the exclusive collection of wines at VinoElite.",
+      "url": "https://vinoelite.com/catalog.html",
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": []
+      }
+    }
+    </script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- GLOBAL STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        /* ACCESSIBILITY FIX: Lightened --text-muted for better contrast */
+        :root { --primary-color: #c19a6b; --primary-dark: #a67c52; --primary-light: #e8c8a0; --bg-dark: #1a1a1a; --bg-darker: #0f0f0f; --bg-light: #2d1b1b; --text-light: #f5f5f5; --text-muted: #d0d0d0; --border-color: rgba(255, 255, 255, 0.1); --success-color: #28a745; --danger-color: #dc3545; }
+        body { background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%); color: var(--text-light); line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        button, .btn { cursor: pointer; transition: all 0.3s ease; }
+
+        /* --- HEADER STYLES --- */
+        header { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); padding: 15px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color); height: 75px; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; height: 100%; }
+        .logo { font-size: 1.8rem; font-weight: 300; letter-spacing: 2px; color: var(--primary-light); text-decoration: none; }
+        .logo span { font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: color 0.3s ease; position: relative; padding: 5px 0; }
+        .nav-links a::after { content: ''; position: absolute; bottom: -5px; left: 0; width: 0; height: 2px; background: var(--primary-color); transition: width 0.3s ease; }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+        .nav-links a:hover, .nav-links a.active { color: var(--primary-light); }
+        .header-actions { display: flex; gap: 15px; align-items: center; }
+        .search-btn, .wishlist-btn, .cart-btn { position: relative; background: none; border: none; color: var(--text-light); font-size: 1.2rem; padding: 8px 12px; transition: all 0.3s ease; cursor: pointer; border-radius: 8px; text-decoration: none; }
+        .search-btn:hover, .wishlist-btn:hover, .cart-btn:hover { color: var(--primary-light); background: rgba(255, 255, 255, 0.05); }
+        .cart-count-badge, .wishlist-count-badge { position: absolute; top: 5px; right: 5px; background: var(--primary-color); color: var(--bg-dark); border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; line-height: 1; display: none; }
+        .auth-btn { display: flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.1); color: var(--text-light); text-decoration: none; padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.9rem; transition: all 0.3s ease; backdrop-filter: blur(10px); }
+        .auth-btn:hover { background: var(--primary-color); color: var(--bg-dark); border-color: var(--primary-color); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(193, 154, 107, 0.3); }
+        .mobile-actions { display: none; margin-top: 25px; padding-top: 25px; border-top: 1px solid var(--border-color); }
+        .mobile-search { margin-bottom: 20px; }
+        .search-box { display: flex; background: rgba(255, 255, 255, 0.05); border-radius: 25px; padding: 5px; border: 1px solid var(--border-color); }
+        .search-box input { flex-grow: 1; background: none; border: none; color: var(--text-light); padding: 12px 15px; font-size: 1rem; }
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box button { background: var(--primary-color); border: none; border-radius: 50%; width: 45px; height: 45px; color: var(--bg-dark); cursor: pointer; transition: all 0.3s ease; }
+        .search-box button:hover { background: var(--primary-light); }
+        .mobile-action-btn { display: flex; align-items: center; gap: 15px; color: var(--text-light); text-decoration: none; padding: 15px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); margin-bottom: 8px; transition: all 0.3s ease; border: 1px solid transparent; }
+        .mobile-action-btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--border-color); transform: translateX(5px); }
+        .mobile-action-btn i { width: 20px; text-align: center; font-size: 1.1rem; }
+        .mobile-action-btn .cart-count, .mobile-action-btn .wishlist-count { background: var(--primary-color); color: var(--bg-dark); border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; margin-left: auto; display: none; }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-light); font-size: 1.5rem; cursor: pointer; z-index: 1001; }
+
+        /* --- SKELETON LOADING STYLES (REPLACES LOADER) --- */
+        .skeleton-card { pointer-events: none; border: 1px solid var(--border-color); background: rgba(255,255,255,0.02); }
+        .skeleton-image { width: 100%; aspect-ratio: 3/4; background: #2d1b1b; animation: pulse-bg 1.5s infinite; }
+        .skeleton-text { height: 15px; background: #2d1b1b; margin-bottom: 10px; border-radius: 4px; animation: pulse-bg 1.5s infinite; }
+        .skeleton-btn { height: 40px; background: #2d1b1b; border-radius: 30px; margin-top: auto; animation: pulse-bg 1.5s infinite; }
+        .w-50 { width: 50%; } .w-80 { width: 80%; } .w-40 { width: 40%; }
+
+        @keyframes pulse-bg {
+            0% { background-color: rgba(255, 255, 255, 0.05); }
+            50% { background-color: rgba(255, 255, 255, 0.1); }
+            100% { background-color: rgba(255, 255, 255, 0.05); }
+        }
+
+        .animate-on-scroll { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .animate-on-scroll.is-visible { opacity: 1; transform: translateY(0); }
+
+        /* --- CATALOG-SPECIFIC STYLES --- */
+        .page-header { padding: 40px 0 20px; }
+        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 10px; }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .breadcrumb a:hover { color: var(--primary-light); }
+        .page-title { font-size: 2.5rem; font-weight: 300; letter-spacing: 1px; margin-bottom: 10px; }
+        .catalog-layout { display: flex; gap: 30px; padding: 30px 0 60px; align-items: flex-start; }
+        .filters-sidebar { width: 280px; flex-shrink: 0; position: sticky; top: 110px; }
+        .filters-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .filters-title { font-size: 1.3rem; font-weight: 400; }
+        .reset-filters { background: none; border: none; color: var(--primary-color); font-size: 0.9rem; cursor: pointer; transition: color 0.3s ease; }
+        .reset-filters:hover { color: var(--primary-light); }
+        .filter-group { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .filter-title { font-size: 1.1rem; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .filter-content { max-height: 250px; overflow-y: auto; padding-right: 10px; }
+        .filter-option { margin-bottom: 12px; display: flex; align-items: center; transition: opacity 0.3s ease; }
+        .filter-option.disabled { opacity: 0.4; pointer-events: none; }
+        .filter-option input { margin-right: 10px; accent-color: var(--primary-color); }
+        .filter-option label { cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .option-count { color: var(--text-muted); font-size: 0.8rem; }
+        .price-filter-inputs { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .price-filter-inputs span { margin: 0 5px; }
+        .price-input { width: 80px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-light); padding: 5px; border-radius: 5px; text-align: center; }
+        .price-slider-container { position: relative; height: 5px; background: rgba(255,255,255,0.2); border-radius: 5px; }
+        .price-slider-range { position: absolute; height: 100%; background: var(--primary-color); border-radius: 5px; }
+        .price-slider-container input[type=range] { position: absolute; width: 100%; height: 5px; background: none; pointer-events: none; -webkit-appearance: none; margin: 0; }
+        .price-slider-container input[type=range]::-webkit-slider-thumb { height: 15px; width: 15px; border-radius: 50%; background: var(--primary-light); border: 2px solid var(--primary-color); cursor: pointer; pointer-events: auto; -webkit-appearance: none; }
+        .products-section { flex: 1; min-width: 0; }
+        .products-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .products-count { color: var(--text-muted); }
+        .toolbar-actions { display: flex; align-items: center; gap: 20px; }
+        .sort-options { display: flex; align-items: center; gap: 10px; }
+        .sort-select { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); border-radius: 5px; padding: 8px 12px; color: var(--text-light); cursor: pointer; }
+        .view-toggle button { background: none; border: 1px solid var(--border-color); color: var(--text-muted); width: 38px; height: 38px; border-radius: 5px; cursor: pointer; transition: all 0.3s ease; }
+        .view-toggle button.active, .view-toggle button:hover { color: var(--text-light); background: rgba(255, 255, 255, 0.1); }
+        .active-filters-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+        .filter-pill { background: var(--primary-color); color: var(--bg-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+        .filter-pill button { background: none; border: none; color: var(--bg-dark); opacity: 0.7; cursor: pointer; font-size: 1rem; }
+        .filter-pill button:hover { opacity: 1; }
+        .products-grid { display: grid; gap: 25px; }
+        .products-grid.grid-view { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .products-grid.list-view { grid-template-columns: 1fr; }
+        
+        .product-card { 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(10px); 
+            border-radius: 15px; 
+            overflow: hidden; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease; 
+            border: 1px solid var(--border-color); 
+            text-decoration: none; 
+            color: var(--text-light); 
+            display: flex; 
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: cardAppear 0.6s forwards;
+        }
+        @keyframes cardAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4); }
+        .slideshow-container { position: relative; overflow: hidden; background: linear-gradient(to bottom, var(--bg-light), var(--bg-dark)); aspect-ratio: 3 / 4; width: 100%; }
+        .slideshow-container:hover .slideshow-item.active img { transform: scale(1.05); }
+        .slideshow-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s ease-in-out; pointer-events: none; }
+        .slideshow-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .slideshow-item.active { opacity: 1; }
+        .slideshow-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; cursor: grab; }
+        .product-badge { position: absolute; top: 15px; right: 15px; background: var(--primary-color); color: var(--bg-dark); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; z-index: 3; }
+        .list-view .slideshow-container { width: 200px; height: calc(200px * 4 / 3); flex-shrink: 0; }
+        .product-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .product-subtitle { font-size: 0.8rem; color: var(--primary-color); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .product-name { font-size: 1.3rem; margin-bottom: 10px; font-weight: 400; letter-spacing: 1px; }
+        .product-price { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .price { font-size: 1.5rem; font-weight: 300; color: var(--primary-light); }
+        .old-price { font-size: 1rem; text-decoration: line-through; color: var(--text-muted); }
+        .grid-view .product-info { justify-content: space-between; }
+        .list-view .product-card { flex-direction: row; align-items: center; }
+        .list-view .product-info { justify-content: center; }
+        .product-description { display: block; font-size: 0.9rem; color: var(--text-muted); margin-top: 10px; line-height: 1.5; height: 60px; overflow: hidden; }
+        .add-to-cart-btn { position: relative; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: auto; }
+        .add-to-cart-btn:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        .add-to-cart-btn.added, .add-to-cart-btn:disabled { background: var(--success-color); transform: none; box-shadow: none; cursor: default; color: var(--text-light); }
+        
+        .add-to-cart-btn .cart-quantity-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: 2px solid var(--bg-dark);
+            transform: scale(0);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        .add-to-cart-btn .cart-quantity-badge.visible {
+            transform: scale(1);
+        }
+
+        .wishlist-toggle-btn { position: absolute; bottom: 15px; right: 15px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(5px); border: 1px solid var(--border-color); color: var(--text-light); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 3; transition: all 0.3s ease; }
+        .wishlist-toggle-btn:hover { background: rgba(255, 255, 255, 0.1); transform: scale(1.1); }
+        .wishlist-toggle-btn.active { color: var(--danger-color); }
+        .load-more-container { text-align: center; margin-top: 50px; }
+        .load-more-btn { background: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); color: var(--text-light); padding: 15px 40px; border-radius: 30px; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; }
+        .load-more-btn:hover { background: var(--primary-color); color: var(--bg-dark); }
+        .load-more-btn:disabled { display: none; }
+        .mobile-filters-btn { display: none; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 12px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; align-items: center; gap: 8px; margin-bottom: 20px; width: 100%; justify-content: center; }
+        .mobile-filters-btn:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); }
+
+        /* --- FOOTER STYLES --- */
+        footer { background: var(--bg-darker); padding: 60px 0 30px; border-top: 1px solid var(--border-color); }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-column h3 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; color: var(--text-light); text-decoration: none; transition: all 0.3s ease; }
+        .social-links a:hover { background: var(--primary-color); color: var(--bg-dark); transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+        
+        /* --- MODAL & TOAST STYLES --- */
+        .login-modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .login-modal-content { background: var(--bg-dark); margin: 10% auto; padding: 30px 40px; border: 1px solid var(--border-color); width: 90%; max-width: 420px; border-radius: 15px; position: relative; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideIn 0.4s ease; }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .close-modal-btn { position: absolute; top: 10px; right: 20px; color: var(--text-muted); font-size: 2rem; font-weight: bold; background: none; border: none; cursor: pointer; }
+        .close-modal-btn:hover { color: var(--text-light); }
+        .login-modal-content h3 { font-size: 1.8rem; font-weight: 300; color: var(--primary-light); margin-bottom: 10px; }
+        .login-modal-content p { color: var(--text-muted); margin-bottom: 25px; }
+        .social-btn { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease; width: 100%; }
+        .social-btn i { font-size: 1.2rem; }
+        .social-btn.google { background: #4285F4; color: white; border-color: #4285F4; }
+        .social-btn.google:hover { background: #5a95f5; }
+        .separator { display: flex; align-items: center; text-align: center; color: var(--text-muted); margin: 25px 0; }
+        .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
+        .separator:not(:empty)::before { margin-right: .5em; }
+        .separator:not(:empty)::after { margin-left: .5em; }
+        #auth-form .form-group { margin-bottom: 15px; }
+        #auth-form input { width: 100%; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); color: var(--text-light); padding: 14px; border-radius: 8px; font-size: 1rem; }
+        #auth-form input:focus { border-color: var(--primary-color); outline: none; }
+        .error-message { color: var(--danger-color); font-size: 0.9rem; margin-bottom: 15px; min-height: 1.2em; }
+        .auth-submit-btn { width: 100%; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 14px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .auth-submit-btn:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); }
+        .forgot-password { display: inline-block; margin-top: 20px; font-size: 0.9rem; color: var(--text-muted); text-decoration: none; }
+        .forgot-password:hover { color: var(--primary-light); text-decoration: underline; }
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1050; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background-color: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); color: var(--text-light); padding: 15px 20px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 5px 15px rgba(0,0,0,0.3); visibility: hidden; opacity: 0; transition: visibility 0s, opacity 0.5s, transform 0.5s; transform: translateY(20px); }
+        .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+        .toast.success { border-left: 4px solid var(--success-color); }
+        .toast.danger { border-left: 4px solid var(--danger-color); }
+        .toast.info { border-left: 4px solid var(--primary-color); }
+        
+        .search-modal { display: none; position: fixed; z-index: 1002; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .search-modal-content { position: relative; top: 25%; margin: 0 auto; width: 90%; max-width: 600px; }
+        .search-modal .search-box { display: flex; background: rgba(255, 255, 255, 0.05); border-radius: 50px; padding: 8px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .search-modal .search-box input { flex-grow: 1; background: none; border: none; color: var(--text-light); padding: 15px 25px; font-size: 1.2rem; }
+        .search-modal .search-box input::placeholder { color: var(--text-muted); }
+        .search-modal .search-box button { background: var(--primary-color); border: none; border-radius: 50%; width: 55px; height: 55px; font-size: 1.2rem; color: var(--bg-dark); cursor: pointer; transition: all 0.3s ease; }
+        .search-modal .search-box button:hover { background: var(--primary-light); }
+        .close-search-modal-btn { position: absolute; top: -50px; right: 0; color: var(--text-muted); font-size: 2.5rem; font-weight: bold; background: none; border: none; cursor: pointer; transition: color 0.3s ease; }
+        .close-search-modal-btn:hover { color: var(--text-light); }
+        
+        /* --- RESPONSIVE STYLES --- */
+        @media (max-width: 1200px) {
+            .catalog-layout { flex-direction: column; }
+            .filters-sidebar { width: 100%; position: static; display: none; }
+            .filters-sidebar.active { display: block; }
+            .mobile-filters-btn { display: flex; }
+        }
+        @media (max-width: 768px) {
+            .header-actions .desktop-only { display: none; }
+            .header-actions { display: flex; gap: 0; }
+            .nav-links.active .mobile-actions { display: block; }
+            
+            .nav-links {
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                top: 75px;
+                left: 0;
+                width: 100%;
+                height: calc(100vh - 75px);
+                background: rgba(10, 10, 10, 0.98);
+                backdrop-filter: blur(20px);
+                padding: 25px 20px;
+                border-bottom: 1px solid var(--border-color);
+                overflow-y: auto;
+                gap: 0;
+                transform: translateX(-100%);
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 999;
+            }
+            .nav-links.active { transform: translateX(0); }
+            .nav-links a:not(.mobile-action-btn) {
+                font-size: 1.1rem;
+                padding: 15px 0;
+                border-bottom: 1px solid var(--border-color);
+                opacity: 0;
+                transform: translateX(-20px);
+                transition: all 0.3s ease;
+            }
+            .nav-links.active a:not(.mobile-action-btn) { opacity: 1; transform: translateX(0); }
+            .nav-links.active a:not(.mobile-action-btn):nth-child(1) { transition-delay: 0.1s; }
+            .nav-links.active a:not(.mobile-action-btn):nth-child(2) { transition-delay: 0.15s; }
+            .nav-links.active a:not(.mobile-action-btn):nth-child(3) { transition-delay: 0.2s; }
+            .nav-links.active a:not(.mobile-action-btn):nth-child(4) { transition-delay: 0.25s; }
+            .nav-links.active a:not(.mobile-action-btn):nth-child(5) { transition-delay: 0.3s; }
+            .mobile-menu-btn { display: block; }
+            
+            .products-toolbar { flex-direction: column; align-items: flex-start; }
+            .toolbar-actions { width: 100%; justify-content: space-between; }
+        }
+        @media (max-width: 576px) {
+            .page-title { font-size: 2rem; }
+            .products-grid.grid-view { grid-template-columns: 1fr; }
+            .list-view .product-card { flex-direction: column; }
+            .list-view .slideshow-container { width: 100%; height: auto; }
+            .mobile-action-btn { padding: 12px 15px; font-size: 0.95rem; }
+            .search-box input { padding: 10px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADER REMOVED FOR BETTER LCP -->
+
+    <div id="main-site-content" class="loaded" style="opacity: 1;">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                    <nav class="nav-links" id="main-nav">
+                        <a href="/index.html">Home</a>
+                        <a href="/catalog.html" class="active">Catalog</a>
+                        <a href="#">Collections</a>
+                        <a href="#">Wineries</a>
+                        <a href="#">About Us</a>
+                        <div class="mobile-actions">
+                            <div class="mobile-search">
+                                <form class="search-box">
+                                    <input type="text" placeholder="Search wines...">
+                                    <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                                </form>
+                            </div>
+                            <a href="/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                                <i class="far fa-user"></i>
+                                <span>Sign In / Register</span>
+                            </a>
+                            <a href="/cart.html" class="mobile-action-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Shopping Cart</span>
+                                <span class="cart-count">0</span>
+                            </a>
+                            <a href="/profile.html#wishlist" class="mobile-action-btn">
+                                <i class="far fa-heart"></i>
+                                <span>Wishlist</span>
+                                <span class="wishlist-count">0</span>
+                            </a>
+                        </div>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="search-btn desktop-only" title="Search" aria-label="Search"><i class="fas fa-search"></i></button>
+                        <a href="/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist" aria-label="Wishlist"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                        <a href="/profile.html" class="auth-btn desktop-only" id="auth-button" title="Sign In"><i class="far fa-user"></i><span class="auth-text">Sign In</span></a>
+                        <a href="/cart.html" class="cart-btn desktop-only" title="Cart" aria-label="Cart"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                    </div>
+                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <section class="page-header animate-on-scroll">
+            <div class="container">
+                <div class="breadcrumb" id="breadcrumb-container"></div>
+                <h1 class="page-title">Wine Catalog</h1>
+            </div>
+        </section>
+
+        <div class="container">
+            <button class="mobile-filters-btn animate-on-scroll">
+                <i class="fas fa-filter"></i>
+                <span>Show Filters</span>
+            </button>
+            
+            <div class="catalog-layout">
+                <aside class="filters-sidebar animate-on-scroll">
+                    <div class="filters-header">
+                        <h2 class="filters-title">Filters</h2>
+                        <button class="reset-filters">Reset All</button>
+                    </div>
+                    <div id="filters-container">
+                        <!-- Placeholder for filters while loading -->
+                        <div style="padding: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading filters...
+                        </div>
+                    </div>
+                </aside>
+                
+                <section class="products-section animate-on-scroll">
+                    <div class="products-toolbar">
+                        <div class="products-count">Loading wines...</div>
+                        <div class="toolbar-actions">
+                            <div class="sort-options">
+                                <select class="sort-select" id="sort-select" aria-label="Sort wines">
+                                    <option value="popularity">Popularity</option>
+                                    <option value="price-asc">Price (low to high)</option>
+                                    <option value="price-desc">Price (high to low)</option>
+                                    <option value="name-asc">Name (A-Z)</option>
+                                </select>
+                            </div>
+                            <div class="view-toggle">
+                                <button id="grid-view-btn" class="active" aria-label="Grid view"><i class="fas fa-th-large"></i></button>
+                                <button id="list-view-btn" aria-label="List view"><i class="fas fa-list"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="active-filters-container" id="active-filters-container"></div>
+                    
+                    <!-- SKELETON LOADING STRUCTURE (Visible immediately) -->
+                    <div class="products-grid grid-view" id="products-grid">
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-image"></div>
+                            <div class="product-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-image"></div>
+                            <div class="product-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-image"></div>
+                            <div class="product-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-image"></div>
+                            <div class="product-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="load-more-container">
+                        <button class="load-more-btn" id="load-more-btn">Load More</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        
+        <footer id="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-column"><h3>VinoElite</h3><ul class="footer-links"><li><a href="#">About Us</a></li><li><a href="#">Contact</a></li><li><a href="#">Shipping & Payment</a></li><li><a href="#">Returns</a></li></ul></div>
+                    <div class="footer-column"><h3>Catalog</h3><ul class="footer-links"><li><a href="#">Red Wines</a></li><li><a href="#">White Wines</a></li><li><a href="#">Sparkling Wines</a></li><li><a href="#">Spirits</a></li></ul></div>
+                    <div class="footer-column"><h3>Help</h3><ul class="footer-links"><li><a href="#">FAQ</a></li><li><a href="#">Terms of Use</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Sitemap</a></li></ul></div>
+                    <div class="footer-column"><h3>Contacts</h3><ul class="footer-links"><li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li><li><i class="fas fa-envelope"></i> info@vinoelite.com</li><li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li></ul><div class="social-links"><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div>
+                </div>
+                <div class="footer-bottom"><p>&copy; 2023 VinoElite. All rights reserved.</p></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="login-modal" class="login-modal">
+        <div class="login-modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h3>Sign In or Sign Up</h3>
+            <p>to access your cart and wishlist across devices.</p>
+            <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="separator"><span>OR</span></div>
+            <form id="auth-form"><div class="form-group"><input type="email" id="auth-email" placeholder="Enter your email" required></div><div class="form-group"><input type="password" id="auth-password" placeholder="Enter your password" required></div><div class="error-message" id="auth-error"></div><button type="submit" class="auth-submit-btn">Continue with Email</button></form>
+            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
+        </div>
+    </div>
+
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <button class="close-search-modal-btn" aria-label="Close"><i class="fas fa-times"></i></button>
+            <form id="desktop-search-form" class="search-box"><input type="text" id="desktop-search-input" placeholder="Search for wines, regions, wineries..."><button type="submit" aria-label="Search"><i class="fas fa-search"></i></button></form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module">
+    // ===============================================================
+    // =================== FIREBASE INITIALIZATION ===================
+    // ===============================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, updateDoc, runTransaction, arrayUnion, arrayRemove, writeBatch, where, limit, startAfter } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+      authDomain: "wine-91d0e.firebaseapp.com",
+      projectId: "wine-91d0e",
+      storageBucket: "wine-91d0e.firebasestorage.app",
+      messagingSenderId: "1021620433427",
+      appId: "1:1021620433427:web:5439252fb350c4455a85e6",
+      measurementId: "G-TRWHY3KXK1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 3000);
+    }
+
+    async function createUserProfileDocument(userAuth) {
+        if (!userAuth) return;
+        const userRef = doc(db, "users", userAuth.uid);
+        const userSnapshot = await getDoc(userRef);
+        if (!userSnapshot.exists()) {
+            const { email, displayName } = userAuth;
+            const createdAt = new Date();
+            try {
+                await setDoc(userRef, {
+                    displayName: displayName || email.split('@')[0],
+                    email,
+                    createdAt,
+                    wishlist: [],
+                    address: {},
+                    totalOrders: 0,
+                    totalSpent: 0,
+                    lastActivity: createdAt
+                });
+            } catch (error) { console.error("Error creating user profile", error.message); }
+        }
+        return userRef;
+    }
+
+    const CART_STORAGE_KEY = 'vinoelite_cart';
+    const WISHLIST_STORAGE_KEY = 'vinoelite_wishlist';
+    let wishlistProductIds = new Set();
+
+    async function updateHeaderCounters() {
+        const user = auth.currentUser;
+        let cartItemCount = 0;
+        let wishlistItemCount = 0;
+
+        if (user) {
+            const cartSnapshot = await getDocs(collection(db, `users/${user.uid}/cart`));
+            cartSnapshot.forEach(doc => { cartItemCount += doc.data().quantity; });
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().wishlist) {
+                wishlistItemCount = userDoc.data().wishlist.length;
+                wishlistProductIds = new Set(userDoc.data().wishlist);
+            }
+        } else {
+            const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+            localCart.forEach(item => { cartItemCount += item.quantity; });
+            const localWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY)) || [];
+            wishlistItemCount = localWishlist.length;
+            wishlistProductIds = new Set(localWishlist);
+        }
+
+        document.querySelectorAll('.cart-count, .cart-count-badge').forEach(el => {
+            el.textContent = cartItemCount;
+            el.style.display = cartItemCount > 0 ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.wishlist-count, .wishlist-count-badge').forEach(el => {
+            el.textContent = wishlistItemCount;
+            el.style.display = wishlistItemCount > 0 ? 'flex' : 'none';
+        });
+
+        document.querySelectorAll('.wishlist-toggle-btn').forEach(btn => {
+            const icon = btn.querySelector('i');
+            if (wishlistProductIds.has(btn.dataset.productId)) {
+                btn.classList.add('active');
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+            } else {
+                btn.classList.remove('active');
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+            }
+        });
+    }
+
+    async function updateProductCartStatus(productId) {
+        const user = auth.currentUser;
+        let quantityInCart = 0;
+        if (user) {
+            const cartItemRef = doc(db, `users/${user.uid}/cart`, productId);
+            const docSnap = await getDoc(cartItemRef);
+            if (docSnap.exists()) {
+                quantityInCart = docSnap.data().quantity;
+            }
+        } else {
+            const cart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) {
+                quantityInCart = existingItem.quantity;
+            }
+        }
+
+        const buttons = document.querySelectorAll(`.add-to-cart-btn[data-product-id="${productId}"]`);
+        buttons.forEach(btn => {
+            const badge = btn.querySelector('.cart-quantity-badge');
+            if (badge) {
+                if (quantityInCart > 0) {
+                    badge.textContent = quantityInCart;
+                    badge.classList.add('visible');
+                } else {
+                    badge.classList.remove('visible');
+                }
+            }
+        });
+    }
+
+    async function addToCart(productId, buttonElement) {
+        const user = auth.currentUser;
+        if (user) {
+            const cartItemRef = doc(db, `users/${user.uid}/cart`, productId);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const cartItemDoc = await transaction.get(cartItemRef);
+                    if (!cartItemDoc.exists()) {
+                        transaction.set(cartItemRef, { quantity: 1, addedAt: new Date() });
+                    } else {
+                        const newQuantity = cartItemDoc.data().quantity + 1;
+                        transaction.update(cartItemRef, { quantity: newQuantity });
+                    }
+                });
+            } catch (e) { console.error("Transaction failed: ", e); }
+        } else {
+            let cart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) { existingItem.quantity++; } else { cart.push({ productId, quantity: 1 }); }
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+        }
+        showToast('Added to cart!', 'success');
+        await updateHeaderCounters();
+        await updateProductCartStatus(productId);
+
+        if (buttonElement) {
+            const originalTextNode = Array.from(buttonElement.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0);
+            const originalText = originalTextNode ? originalTextNode.textContent : 'Add to Cart';
+            
+            if (originalTextNode) originalTextNode.textContent = ' Added!';
+            buttonElement.classList.add('added');
+            buttonElement.disabled = true;
+            
+            setTimeout(() => {
+                if (originalTextNode) originalTextNode.textContent = originalText;
+                buttonElement.classList.remove('added');
+                buttonElement.disabled = false;
+            }, 2000);
+        }
+    }
+
+    async function toggleWishlist(productId) {
+        const user = auth.currentUser;
+        if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            if (wishlistProductIds.has(productId)) {
+                await updateDoc(userDocRef, { wishlist: arrayRemove(productId) });
+                showToast('Removed from wishlist.', 'danger');
+            } else {
+                await updateDoc(userDocRef, { wishlist: arrayUnion(productId) });
+                showToast('Added to wishlist!', 'success');
+            }
+        } else {
+            let localWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY)) || [];
+            const itemIndex = localWishlist.indexOf(productId);
+            if (itemIndex > -1) {
+                localWishlist.splice(itemIndex, 1);
+                showToast('Removed from wishlist.', 'danger');
+            } else {
+                localWishlist.push(productId);
+                showToast('Added to wishlist! Sign in to save it.', 'info');
+            }
+            localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(localWishlist));
+        }
+        await updateHeaderCounters();
+    }
+
+    async function syncCartOnAuth(user) {
+        const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+        if (localCart.length === 0) return;
+        const cartCollectionRef = collection(db, `users/${user.uid}/cart`);
+        const batch = writeBatch(db);
+        for (const localItem of localCart) {
+            const docRef = doc(cartCollectionRef, localItem.productId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const newQuantity = docSnap.data().quantity + localItem.quantity;
+                batch.update(docRef, { quantity: newQuantity });
+            } else {
+                batch.set(docRef, { quantity: localItem.quantity, addedAt: new Date() });
+            }
+        }
+        await batch.commit();
+        localStorage.removeItem(CART_STORAGE_KEY);
+        showToast('Your cart has been synced!', 'info');
+    }
+
+    async function syncWishlistOnAuth(user) {
+        const localWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY)) || [];
+        if (localWishlist.length === 0) return;
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const firestoreWishlist = userDoc.exists() && userDoc.data().wishlist ? userDoc.data().wishlist : [];
+        const merged = [...new Set([...firestoreWishlist, ...localWishlist])];
+        await setDoc(userDocRef, { wishlist: merged }, { merge: true });
+        localStorage.removeItem(WISHLIST_STORAGE_KEY);
+    }
+
+    const loginModal = document.getElementById('login-modal');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const desktopAuthBtn = document.getElementById('auth-button');
+    const mobileAuthBtn = document.getElementById('mobile-auth-button');
+    const authForm = document.getElementById('auth-form');
+    const emailInput = document.getElementById('auth-email');
+    const passwordInput = document.getElementById('auth-password');
+    const errorContainer = document.getElementById('auth-error');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+    function openLoginModal(e) { e.preventDefault(); loginModal.style.display = 'block'; }
+    function closeLoginModal() {
+        loginModal.style.display = 'none';
+        authForm.reset();
+        errorContainer.textContent = '';
+    }
+
+    const googleProvider = new GoogleAuthProvider();
+    document.getElementById('google-signin-btn').addEventListener('click', async () => {
+        try {
+            await signInWithPopup(auth, googleProvider);
+            closeLoginModal();
+        } catch (error) { errorContainer.textContent = error.message; }
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        errorContainer.textContent = '';
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            closeLoginModal();
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    closeLoginModal();
+                } catch (createError) { errorContainer.textContent = createError.message; }
+            } else { errorContainer.textContent = error.message; }
+        }
+    });
+
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        if (!email) { alert('Please enter your email in the email field to reset the password.'); return; }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert('Password reset email sent! Please check your inbox.');
+        } catch (error) { alert(`Error: ${error.message}`); }
+    });
+
+    function updateUIForAuthState(user) {
+        if (user) {
+            const userName = user.displayName || user.email.split('@')[0];
+            desktopAuthBtn.href = "/profile.html";
+            desktopAuthBtn.innerHTML = `<i class="fas fa-user-check"></i> <span class="auth-text">${userName}</span>`;
+            desktopAuthBtn.title = "My Account";
+            desktopAuthBtn.removeEventListener('click', openLoginModal);
+            mobileAuthBtn.href = "/profile.html";
+            mobileAuthBtn.querySelector('span').textContent = userName;
+            mobileAuthBtn.removeEventListener('click', openLoginModal);
+        } else {
+            desktopAuthBtn.href = "#";
+            desktopAuthBtn.innerHTML = `<i class="far fa-user"></i> <span class="auth-text">Sign In</span>`;
+            desktopAuthBtn.title = "Sign In";
+            desktopAuthBtn.addEventListener('click', openLoginModal);
+            mobileAuthBtn.href = "#";
+            mobileAuthBtn.querySelector('span').textContent = 'Sign In / Register';
+            mobileAuthBtn.addEventListener('click', openLoginModal);
+        }
+    }
+    
+    function openLoginModalForGuests(e) { e.preventDefault(); openLoginModal(e); }
+
+    function setupGuestInteractions() {
+        const user = auth.currentUser;
+        const wishlistLinks = document.querySelectorAll('a[href="/profile.html#wishlist"]');
+        wishlistLinks.forEach(link => {
+            link.removeEventListener('click', openLoginModalForGuests);
+            if (!user) { link.addEventListener('click', openLoginModalForGuests); }
+        });
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        updateUIForAuthState(user);
+        if (user) {
+            await createUserProfileDocument(user);
+            await syncCartOnAuth(user);
+            await syncWishlistOnAuth(user);
+        }
+        setupGuestInteractions();
+        await updateHeaderCounters();
+        document.querySelectorAll('.add-to-cart-btn[data-product-id]').forEach(btn => {
+            updateProductCartStatus(btn.dataset.productId);
+        });
+    });
+
+    // ===============================================================
+    // =================== MAIN CATALOG SCRIPT =======================
+    // ===============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const mainContent = document.getElementById('main-site-content');
+
+        const desktopSearchBtn = document.querySelector('.search-btn.desktop-only');
+        const searchModal = document.getElementById('search-modal');
+        const closeSearchModalBtn = document.querySelector('.close-search-modal-btn');
+        const desktopSearchForm = document.getElementById('desktop-search-form');
+        const desktopSearchInput = document.getElementById('desktop-search-input');
+
+        if (desktopSearchBtn && searchModal) {
+            desktopSearchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                searchModal.style.display = 'block';
+                desktopSearchInput.focus();
+            });
+
+            const closeSearchModal = () => { searchModal.style.display = 'none'; };
+            closeSearchModalBtn.addEventListener('click', closeSearchModal);
+            searchModal.addEventListener('click', (e) => { if (e.target === searchModal) closeSearchModal(); });
+
+            desktopSearchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = desktopSearchInput.value.trim();
+                if (query) {
+                    window.location.href = `/catalog.html?search=${encodeURIComponent(query)}`;
+                }
+            });
+        }
+
+        let allProducts = [];
+        let filteredProducts = [];
+        let displayedProductsCount = 0;
+        const PRODUCTS_PER_PAGE = 12;
+
+        const stillWineSweetnessOptions = ['Dry', 'Semi-Dry', 'Semi-Sweet', 'Sweet'];
+        const sparklingWineSweetnessOptions = ['Brut Nature', 'Extra Brut', 'Brut', 'Extra-Dry', 'Dry / Sec', 'Demi-Sec', 'Doux'];
+
+        let regionToCountryMap = {};
+        let appellationToRegionMap = {};
+        let countryToRegionsMap = {};
+        let regionToAppellationsMap = {};
+
+        const state = {
+            filters: {
+                category: [], country: [], region: [], appellation: [],
+                grapeVarieties: [], sweetness: [], volume: [], year: [],
+                price: { min: 0, max: 9999 }
+            },
+            sorting: 'popularity'
+        };
+
+        const productsGrid = document.getElementById('products-grid');
+        const productsCountEl = document.querySelector('.products-count');
+        const filtersContainer = document.getElementById('filters-container');
+        const sortSelect = document.getElementById('sort-select');
+        const resetFiltersBtn = document.querySelector('.reset-filters');
+        const breadcrumbContainer = document.getElementById('breadcrumb-container');
+        const activeFiltersContainer = document.getElementById('active-filters-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const pageTitleEl = document.querySelector('.page-title');
+
+        const animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        async function updateMetaTags() {
+            const selectedCategories = state.filters.category;
+            let pageTitle = 'Wine Catalog | VinoElite';
+            let pageDescription = 'Explore the exclusive collection of wines at VinoElite.';
+
+            function generateTagsByTemplate() {
+                const selectedCountries = state.filters.country;
+                if (selectedCategories.length > 0 || selectedCountries.length > 0) {
+                    const categoryText = selectedCategories.length > 0 ? selectedCategories.join(', ') : 'Wines';
+                    const countryText = selectedCountries.length > 0 ? ` from ${selectedCountries.join(', ')}` : '';
+                    pageTitle = `${categoryText}${countryText} | VinoElite`;
+                    pageDescription = `Discover our premium selection of ${categoryText.toLowerCase()}${countryText}. Best prices and exclusive varieties.`;
+                }
+            }
+
+            if (selectedCategories.length === 1) {
+                const categoryName = selectedCategories[0];
+                const categoryMeta = await loadCategoryMeta(categoryName);
+
+                if (categoryMeta && categoryMeta.metaTitle && categoryMeta.metaDescription) {
+                    pageTitle = categoryMeta.metaTitle;
+                    pageDescription = categoryMeta.metaDescription;
+                } else {
+                    generateTagsByTemplate();
+                }
+            } else {
+                generateTagsByTemplate();
+            }
+            
+            document.title = pageTitle;
+            const descriptionTag = document.querySelector('meta[name="description"]');
+            if(descriptionTag) descriptionTag.setAttribute('content', pageDescription);
+            
+            const ogTitleTag = document.querySelector('meta[property="og:title"]');
+            if(ogTitleTag) ogTitleTag.setAttribute('content', pageTitle);
+
+            const ogDescriptionTag = document.querySelector('meta[property="og:description"]');
+            if(ogDescriptionTag) ogDescriptionTag.setAttribute('content', pageDescription);
+            
+            const ogUrlTag = document.querySelector('meta[property="og:url"]');
+            if(ogUrlTag) ogUrlTag.setAttribute('content', window.location.href);
+            
+            return { pageTitle, pageDescription };
+        }
+
+        function updateSchema(products, pageName, pageDescription) {
+            const schemaScript = document.getElementById('schema-json');
+            if (!schemaScript) return;
+
+            const schemaData = {
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                "name": pageName,
+                "description": pageDescription,
+                "url": window.location.href,
+                "mainEntity": {
+                    "@type": "ItemList",
+                    "itemListElement": [],
+                    "numberOfItems": products.length
+                }
+            };
+
+            products.slice(0, 10).forEach((product, index) => {
+                const imageUrls = (product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) 
+                    ? product.imageUrls 
+                    : [product.imageUrl];
+                    
+                schemaData.mainEntity.itemListElement.push({
+                    "@type": "ListItem",
+                    "position": index + 1,
+                    "item": {
+                        "@type": "Product",
+                        "name": product.name,
+                        "description": product.metaDescription || product.description || '',
+                        "image": imageUrls[0],
+                        "url": `https://vinoelite.com/${generateSlug(product.category)}/${product.slug}`,
+                        "brand": { "@type": "Brand", "name": product.winery || "VinoElite" },
+                        "offers": {
+                            "@type": "Offer",
+                            "priceCurrency": "USD",
+                            "price": product.price,
+                            "availability": "https://schema.org/InStock",
+                            "seller": { "@type": "Organization", "name": "VinoElite" }
+                        }
+                    }
+                });
+            });
+
+            schemaScript.textContent = JSON.stringify(schemaData);
+        }
+
+        async function loadCategoryMeta(categoryName) {
+            try {
+                const q = query(collection(db, "categories"), where("name", "==", categoryName));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    return querySnapshot.docs[0].data();
+                }
+                return null;
+            } catch (error) {
+                console.error("Error loading category meta:", error);
+                return null;
+            }
+        }
+
+        function setupSlideshow(container) {
+            if (!container) return;
+            const slides = Array.from(container.querySelectorAll('.slideshow-item'));
+            if (slides.length <= 1) {
+                if (slides.length === 1) slides[0].classList.add('active');
+                return;
+            }
+            if (container.querySelector('.slideshow-overlay')) return;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'slideshow-overlay';
+            container.appendChild(overlay);
+
+            let currentIndex = 0;
+            let intervalId = setInterval(() => showSlide(currentIndex + 1), 4000);
+
+            function showSlide(index) {
+                const oldSlide = slides[currentIndex];
+                if (oldSlide) oldSlide.classList.remove('active');
+                currentIndex = (index + slides.length) % slides.length;
+                const newSlide = slides[currentIndex];
+                if (newSlide) setTimeout(() => newSlide.classList.add('active'), 50);
+            }
+
+            function manualSlide(direction) {
+                clearInterval(intervalId);
+                showSlide(currentIndex + direction);
+                intervalId = setInterval(() => showSlide(currentIndex + 1), 5000);
+            }
+
+            let touchStartX = 0;
+            overlay.addEventListener('mousedown', e => { touchStartX = e.clientX; overlay.style.cursor = 'grabbing'; clearInterval(intervalId); });
+            overlay.addEventListener('mouseup', e => {
+                overlay.style.cursor = 'grab';
+                if (e.clientX < touchStartX - 50) { manualSlide(1); } 
+                else if (e.clientX > touchStartX + 50) { manualSlide(-1); } 
+                else { intervalId = setInterval(() => showSlide(currentIndex + 1), 5000); }
+            });
+            overlay.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; clearInterval(intervalId); }, { passive: true });
+            overlay.addEventListener('touchend', e => {
+                let touchEndX = e.changedTouches[0].clientX;
+                if (touchEndX < touchStartX - 50) { manualSlide(1); } 
+                else if (touchEndX > touchStartX + 50) { manualSlide(-1); } 
+                else { intervalId = setInterval(() => showSlide(currentIndex + 1), 5000); }
+            });
+            showSlide(0);
+        }
+
+        // === MODIFIED: TWO-STAGE LOADING FOR PERFORMANCE ===
+        async function fetchProductsAndInit() {
+            try {
+                // --- STAGE 1: FAST LOAD (12 items) ---
+                const initialQuery = query(
+                    collection(db, "products"), 
+                    where("isArchived", "==", false), 
+                    limit(12) 
+                );
+                
+                const initialSnapshot = await getDocs(initialQuery);
+                const initialProducts = initialSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                // Set initial data
+                allProducts = initialProducts;
+                filteredProducts = initialProducts;
+                
+                // Render immediately
+                await main(); 
+                
+                // --- STAGE 2: BACKGROUND LOAD (Rest of data) ---
+                const lastVisible = initialSnapshot.docs[initialSnapshot.docs.length - 1];
+                
+                if (lastVisible) {
+                    setTimeout(async () => {
+                        try {
+                            const remainingQuery = query(
+                                collection(db, "products"), 
+                                where("isArchived", "==", false),
+                                startAfter(lastVisible)
+                            );
+                            
+                            const remainingSnapshot = await getDocs(remainingQuery);
+                            const remainingProducts = remainingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                            
+                            // Merge data
+                            allProducts = [...initialProducts, ...remainingProducts];
+                            
+                            // Now build heavy filters
+                            createGeoMaps();
+                            renderFilters();
+                            
+                            // Update internal state without jarring re-render
+                            applyFilters(); 
+                            applySorting();
+                            
+                            // Update counters
+                            if(productsCountEl) productsCountEl.textContent = `Showing ${displayedProductsCount} of ${filteredProducts.length} wines`;
+                            
+                            // Update Load More button visibility
+                            if (loadMoreBtn && displayedProductsCount < filteredProducts.length) {
+                                loadMoreBtn.style.display = 'inline-block';
+                            }
+
+                        } catch (bgError) {
+                            console.error("Background loading failed:", bgError);
+                        }
+                    }, 500); // Small delay to let UI settle
+                } else {
+                    // If less than 12 items total, just build filters now
+                    createGeoMaps();
+                    renderFilters();
+                }
+
+            } catch (error) {
+                console.error("Error fetching products: ", error);
+                if(productsGrid) productsGrid.innerHTML = '<p>Error loading products. Please try again later.</p>';
+            }
+        }
+
+        function createGeoMaps() {
+            allProducts.forEach(p => {
+                if (p.region && p.country) {
+                    regionToCountryMap[p.region] = p.country;
+                    if (!countryToRegionsMap[p.country]) countryToRegionsMap[p.country] = new Set();
+                    countryToRegionsMap[p.country].add(p.region);
+                }
+                if (p.appellation && p.region) {
+                    appellationToRegionMap[p.appellation] = p.region;
+                    if (!regionToAppellationsMap[p.region]) regionToAppellationsMap[p.region] = new Set();
+                    regionToAppellationsMap[p.region].add(p.appellation);
+                }
+            });
+        }
+
+        function processSearchQueryAsFilter(searchQuery) {
+            const query = searchQuery.toLowerCase();
+            const newParams = new URLSearchParams();
+
+            const filterTypes = ['category', 'country', 'region', 'appellation', 'grapeVarieties'];
+            for (const type of filterTypes) {
+                const values = getUniqueValues(type, allProducts);
+                for (const value of values) {
+                    if (value.toLowerCase() === query) {
+                        if (type === 'appellation') {
+                            const region = appellationToRegionMap[value];
+                            const country = region ? regionToCountryMap[region] : null;
+                            if (country) newParams.set('country', country);
+                            if (region) newParams.set('region', region);
+                            newParams.set('appellation', value);
+                        } else if (type === 'region') {
+                            const country = regionToCountryMap[value];
+                            if (country) newParams.set('country', country);
+                            newParams.set('region', value);
+                        } else {
+                            newParams.set(type, value);
+                        }
+                        
+                        window.location.replace(`${window.location.pathname}?${newParams.toString()}`);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        async function main() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search');
+
+            if (searchQuery) {
+                const wasRedirected = processSearchQueryAsFilter(searchQuery);
+                if (wasRedirected) return;
+            }
+
+            parseUrlParams();
+            addEventListeners();
+            validateAndCleanFilters();
+            await runFilterAndSort();
+            
+            document.querySelectorAll('.animate-on-scroll').forEach(el => animationObserver.observe(el));
+        }
+
+        async function runFilterAndSort() {
+            applyFilters();
+            applySorting();
+            updateURL();
+            
+            const { pageTitle, pageDescription } = await updateMetaTags();
+            
+            renderAll();
+            updateDependentFilters();
+            
+            updateSchema(filteredProducts, pageTitle, pageDescription);
+        }
+
+        function applyFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const searchQuery = urlParams.get('search')?.toLowerCase().trim();
+
+            if (searchQuery) {
+                pageTitleEl.textContent = `Search Results for: "${urlParams.get('search')}"`;
+            } else {
+                pageTitleEl.textContent = 'Wine Catalog';
+            }
+
+            filteredProducts = allProducts.filter(product => {
+                if (searchQuery) {
+                    const name = (product.name || '').toLowerCase();
+                    const category = (product.category || '').toLowerCase();
+                    const country = (product.country || '').toLowerCase();
+                    const region = (product.region || '').toLowerCase();
+                    const sweetness = (product.sweetness || '').toLowerCase();
+                    const year = String(product.year || '');
+                    const description = (product.description || product.metaDescription || '').toLowerCase();
+                    const badge = (product.badge || '').toLowerCase();
+                    const grape = (product.grapeVarieties || '').toLowerCase();
+
+                    const isMatch = name.includes(searchQuery) || category.includes(searchQuery) ||
+                                    country.includes(searchQuery) || region.includes(searchQuery) ||
+                                    sweetness.includes(searchQuery) || year.includes(searchQuery) ||
+                                    description.includes(searchQuery) || badge.includes(searchQuery) ||
+                                    grape.includes(searchQuery);
+                    
+                    if (!isMatch) return false;
+                }
+
+                if (product.price < state.filters.price.min || product.price > state.filters.price.max) {
+                    return false;
+                }
+                return Object.keys(state.filters).every(filterKey => {
+                    if (filterKey === 'price') return true;
+                    const selectedValues = state.filters[filterKey];
+                    if (selectedValues.length === 0) return true;
+                    const productValue = product[filterKey];
+                    if (!productValue) return false;
+                    if (filterKey === 'grapeVarieties') {
+                        const productGrapes = productValue.split(',').map(g => g.trim());
+                        return selectedValues.some(v => productGrapes.includes(v));
+                    }
+                    return selectedValues.includes(String(productValue));
+                });
+            });
+        }
+
+        function applySorting() {
+            state.sorting = sortSelect.value;
+            switch (state.sorting) {
+                case 'price-asc': filteredProducts.sort((a, b) => a.price - b.price); break;
+                case 'price-desc': filteredProducts.sort((a, b) => b.price - a.price); break;
+                case 'name-asc': filteredProducts.sort((a, b) => a.name.localeCompare(b.name)); break;
+            }
+        }
+        
+        function validateAndCleanFilters() {
+            const { country, region, appellation } = state.filters;
+            if (country.length > 0 && region.length > 0) {
+                const validRegionsForSelectedCountries = new Set(allProducts.filter(p => country.includes(p.country) && p.region).map(p => p.region));
+                const originalRegions = [...region];
+                state.filters.region = region.filter(r => validRegionsForSelectedCountries.has(r));
+                originalRegions.filter(r => !state.filters.region.includes(r)).forEach(r => {
+                    const checkbox = document.getElementById(`filter-region-${generateSlug(r)}`);
+                    if (checkbox) checkbox.checked = false;
+                });
+            }
+            if (appellation.length > 0) {
+                let relevantProducts = allProducts;
+                if (state.filters.region.length > 0) {
+                    relevantProducts = relevantProducts.filter(p => state.filters.region.includes(p.region));
+                } else if (country.length > 0) {
+                    relevantProducts = relevantProducts.filter(p => country.includes(p.country));
+                }
+                const validAppellations = new Set(relevantProducts.filter(p => p.appellation).map(p => p.appellation));
+                const originalAppellations = [...appellation];
+                state.filters.appellation = appellation.filter(a => validAppellations.has(a));
+                originalAppellations.filter(a => !state.filters.appellation.includes(a)).forEach(a => {
+                    const checkbox = document.getElementById(`filter-appellation-${generateSlug(a)}`);
+                    if (checkbox) checkbox.checked = false;
+                });
+            }
+        }
+
+        function renderAll() {
+            renderBreadcrumbs();
+            renderActiveFilters();
+            renderProducts(true);
+        }
+
+        function renderProducts(reset = false) {
+            if (reset) {
+                productsGrid.innerHTML = '';
+                displayedProductsCount = 0;
+            }
+
+            const productsToRender = filteredProducts.slice(displayedProductsCount, displayedProductsCount + PRODUCTS_PER_PAGE);
+
+            if (productsToRender.length === 0 && reset) {
+                productsGrid.innerHTML = '<p>No products match your criteria.</p>';
+            }
+
+            productsToRender.forEach((prod, index) => {
+                const categorySlug = generateSlug(prod.category);
+                const productUrl = `/${categorySlug}/${prod.slug}`;
+                
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.style.animationDelay = `${index * 0.05}s`;
+                card.dataset.url = productUrl;
+
+                let subtitle = '';
+                const mainInfo = [prod.category, prod.sweetness].filter(Boolean).join(' ');
+                const originInfo = [prod.region, prod.country].filter(Boolean).join(', ');
+                if (mainInfo) subtitle += mainInfo;
+                if (originInfo) subtitle += (subtitle ? ' from ' : '') + originInfo;
+                const description = prod.metaDescription || prod.description || '';
+
+                const imageUrls = (prod.imageUrls && Array.isArray(prod.imageUrls) && prod.imageUrls.length > 0) ? prod.imageUrls : [prod.imageUrl];
+                
+                // OPTIMIZATION: Eager load first 4 images, lazy load the rest
+                const loadingType = (reset && index < 4) ? 'eager' : 'lazy';
+                
+                const slidesHTML = imageUrls.map((url, i) => 
+                    `<div class="slideshow-item ${i===0?'active':''}">
+                        <img src="${url}" 
+                             alt="${prod.name} view ${i + 1}" 
+                             loading="${loadingType}" 
+                             width="300" height="400" 
+                             style="aspect-ratio: 3/4; object-fit: cover;">
+                     </div>`
+                ).join('');
+
+                card.innerHTML = `
+                    <div class="slideshow-container">
+                        ${slidesHTML}
+                        ${prod.badge ? `<div class="product-badge">${prod.badge}</div>` : ''}
+                        <button class="wishlist-toggle-btn" data-product-id="${prod.id}" aria-label="Add to wishlist"><i class="far fa-heart"></i></button>
+                    </div>
+                    <div class="product-info">
+                        <div>
+                            <div class="product-subtitle">${subtitle}</div>
+                            <h3 class="product-name">${prod.name}</h3>
+                            <p class="product-description">${description}</p>
+                        </div>
+                        <div class="product-price">
+                            <div class="price">$${prod.price.toFixed(2)}</div>
+                            ${prod.oldPrice ? `<div class="old-price">$${prod.oldPrice.toFixed(2)}</div>` : ''}
+                        </div>
+                        <button class="add-to-cart-btn" data-product-id="${prod.id}">
+                            <i class="fas fa-shopping-cart"></i> Add to Cart
+                            <span class="cart-quantity-badge"></span>
+                        </button>
+                    </div>
+                `;
+                productsGrid.appendChild(card);
+            });
+
+            productsGrid.querySelectorAll('.slideshow-container').forEach(setupSlideshow);
+            updateHeaderCounters();
+
+            productsToRender.forEach(prod => {
+                updateProductCartStatus(prod.id);
+            });
+
+            displayedProductsCount += productsToRender.length;
+            productsCountEl.textContent = `Showing ${displayedProductsCount} of ${filteredProducts.length} wines`;
+            loadMoreBtn.style.display = displayedProductsCount < filteredProducts.length ? 'inline-block' : 'none';
+        }
+
+        function renderBreadcrumbs() {
+            let html = `<a href="/index.html">Home</a> / <a href="/catalog.html">Catalog</a>`;
+            let tempFilters = {};
+            if (state.filters.category.length > 0) {
+                const value = state.filters.category.join(', ');
+                tempFilters.category = state.filters.category.join(',');
+                html += ` / <a href="/catalog.html?${new URLSearchParams(tempFilters)}">${value}</a>`;
+            }
+            const countriesToShow = new Set(state.filters.country);
+            const regionsToShow = new Set(state.filters.region);
+            const appellationsToShow = new Set(state.filters.appellation);
+            if (countriesToShow.size > 0) {
+                const value = [...countriesToShow].sort().join(', ');
+                tempFilters.country = state.filters.country.join(',');
+                html += ` / <a href="/catalog.html?${new URLSearchParams(tempFilters)}">${value}</a>`;
+            }
+            if (regionsToShow.size > 0) {
+                const value = [...regionsToShow].sort().join(', ');
+                if (state.filters.region.length > 0) tempFilters.region = state.filters.region.join(',');
+                html += ` / <a href="/catalog.html?${new URLSearchParams(tempFilters)}">${value}</a>`;
+            }
+            if (appellationsToShow.size > 0) {
+                const value = [...appellationsToShow].sort().join(', ');
+                 if (state.filters.appellation.length > 0) tempFilters.appellation = state.filters.appellation.join(',');
+                html += ` / <a href="/catalog.html?${new URLSearchParams(tempFilters)}">${value}</a>`;
+            }
+            breadcrumbContainer.innerHTML = html;
+        }
+
+        function renderActiveFilters() {
+            activeFiltersContainer.innerHTML = '';
+            Object.keys(state.filters).forEach(key => {
+                if (key === 'price') return;
+                state.filters[key].forEach(value => {
+                    const pill = document.createElement('div');
+                    pill.className = 'filter-pill';
+                    pill.innerHTML = `<span>${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}</span><button data-key="${key}" data-value="${value}" aria-label="Remove filter">&times;</button>`;
+                    activeFiltersContainer.appendChild(pill);
+                });
+            });
+        }
+        
+        function renderSweetnessFilter() {
+            const selectedCategories = state.filters.category;
+            let relevantSweetnessOptions;
+            if (selectedCategories.length === 0) { relevantSweetnessOptions = stillWineSweetnessOptions; } 
+            else {
+                const hasSparkling = selectedCategories.some(cat => cat.toLowerCase().includes('sparkling'));
+                const hasStill = selectedCategories.some(cat => !cat.toLowerCase().includes('sparkling'));
+                if (hasSparkling && !hasStill) { relevantSweetnessOptions = sparklingWineSweetnessOptions; } 
+                else if (hasStill && !hasSparkling) { relevantSweetnessOptions = stillWineSweetnessOptions; } 
+                else { relevantSweetnessOptions = [...new Set([...stillWineSweetnessOptions, ...sparklingWineSweetnessOptions])]; }
+            }
+            const allSweetnessValuesInCatalog = getUniqueValues('sweetness', allProducts);
+            const optionsToRender = relevantSweetnessOptions.filter(opt => allSweetnessValuesInCatalog.has(opt));
+            const container = document.querySelector('#sweetness-filter-group .filter-content');
+            if (!container) return;
+            let optionsHTML = '';
+            optionsToRender.forEach(option => {
+                const isChecked = state.filters.sweetness.includes(option);
+                optionsHTML += `<div class="filter-option"><input type="checkbox" id="filter-sweetness-${generateSlug(option)}" value="${option}" data-key="sweetness" ${isChecked ? 'checked' : ''}><label for="filter-sweetness-${generateSlug(option)}"><span>${option}</span></label></div>`;
+            });
+            container.innerHTML = optionsHTML;
+        }
+
+        function renderFilters() {
+            const filterDefinitions = [
+                { key: 'category', title: 'Category' }, { key: 'country', title: 'Country' },
+                { key: 'region', title: 'Region' }, { key: 'appellation', title: 'Appellation' },
+                { key: 'grapeVarieties', title: 'Grape' }, { key: 'sweetness', title: 'Sweetness' },
+                { key: 'volume', title: 'Volume' }, { key: 'year', title: 'Year' }
+            ];
+            filtersContainer.innerHTML = '';
+            renderPriceFilter();
+            filterDefinitions.forEach(({key, title}) => {
+                if (key === 'sweetness') {
+                    const group = document.createElement('div');
+                    group.className = 'filter-group';
+                    group.dataset.filterGroup = 'sweetness';
+                    group.id = 'sweetness-filter-group';
+                    group.innerHTML = `<div class="filter-title"><span>${title}</span></div><div class="filter-content"></div>`;
+                    filtersContainer.appendChild(group);
+                } else {
+                    const options = getUniqueValues(key, allProducts);
+                    if (options.size === 0) return;
+                    const group = document.createElement('div');
+                    group.className = 'filter-group';
+                    group.dataset.filterGroup = key;
+                    let optionsHTML = '';
+                    [...options].sort().forEach(option => {
+                        const isChecked = state.filters[key] && state.filters[key].includes(option);
+                        optionsHTML += `<div class="filter-option"><input type="checkbox" id="filter-${key}-${generateSlug(option)}" value="${option}" data-key="${key}" ${isChecked ? 'checked' : ''}><label for="filter-${key}-${generateSlug(option)}"><span>${option}</span></label></div>`;
+                    });
+                    group.innerHTML = `<div class="filter-title"><span>${title}</span></div><div class="filter-content">${optionsHTML}</div>`;
+                    filtersContainer.appendChild(group);
+                }
+            });
+            renderSweetnessFilter();
+        }
+
+        function renderPriceFilter() {
+            const prices = allProducts.map(p => p.price);
+            const minPrice = prices.length ? Math.floor(Math.min(...prices)) : 0;
+            const maxPrice = prices.length ? Math.ceil(Math.max(...prices)) : 1000;
+            state.filters.price.min = minPrice;
+            state.filters.price.max = maxPrice;
+            const group = document.createElement('div');
+            group.className = 'filter-group';
+            group.innerHTML = `<div class="filter-title"><span>Price</span></div><div class="filter-content"><div class="price-filter-inputs"><span id="price-min-label">$${minPrice}</span><span>-</span><span id="price-max-label">$${maxPrice}</span></div><div class="price-slider-container"><div class="price-slider-range"></div><input type="range" id="price-slider-min" min="${minPrice}" max="${maxPrice}" value="${minPrice}"><input type="range" id="price-slider-max" min="${minPrice}" max="${maxPrice}" value="${maxPrice}"></div></div>`;
+            filtersContainer.appendChild(group);
+        }
+        
+        function updateDependentFilters() {
+            let availableProducts = allProducts.filter(product => {
+                return Object.keys(state.filters).every(filterKey => {
+                    if (['region', 'appellation'].includes(filterKey)) return true;
+                    if (filterKey === 'price') return product.price >= state.filters.price.min && product.price <= state.filters.price.max;
+                    const selectedValues = state.filters[filterKey];
+                    if (selectedValues.length === 0) return true;
+                    const productValue = product[filterKey];
+                    if (!productValue) return false;
+                    if (filterKey === 'grapeVarieties') {
+                        return selectedValues.some(v => product.grapeVarieties.split(',').map(g=>g.trim()).includes(v));
+                    }
+                    return selectedValues.includes(String(productValue));
+                });
+            });
+            const selectedCountries = state.filters.country;
+            let regionProducts = selectedCountries.length > 0 ? availableProducts.filter(p => selectedCountries.includes(p.country)) : availableProducts;
+            const availableRegions = getUniqueValues('region', regionProducts);
+            updateOptionsVisibility('region', availableRegions);
+            const selectedRegions = state.filters.region;
+            let appellationProducts = selectedRegions.length > 0 ? regionProducts.filter(p => selectedRegions.includes(p.region)) : regionProducts;
+            const availableAppellations = getUniqueValues('appellation', appellationProducts);
+            updateOptionsVisibility('appellation', availableAppellations);
+        }
+
+        function updateOptionsVisibility(filterKey, availableOptions) {
+            const filterGroup = document.querySelector(`[data-filter-group="${filterKey}"]`);
+            if (!filterGroup) return;
+            const optionElements = filterGroup.querySelectorAll('.filter-option');
+            optionElements.forEach(opt => {
+                const input = opt.querySelector('input');
+                if (availableOptions.has(input.value)) { opt.classList.remove('disabled'); } 
+                else { opt.classList.add('disabled'); }
+            });
+        }
+
+        function getUniqueValues(key, productList) {
+            const values = new Set();
+            productList.forEach(product => {
+                if (product[key]) {
+                    if (key === 'grapeVarieties') {
+                        product[key].split(',').forEach(grape => values.add(grape.trim()));
+                    } else { values.add(String(product[key])); }
+                }
+            });
+            return values;
+        }
+
+        function generateSlug(text) {
+            if (!text) return '';
+            return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+        }
+
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            params.forEach((value, key) => {
+                if (state.filters[key] !== undefined && key !== 'price' && key !== 'search') {
+                    state.filters[key] = value.split(',');
+                }
+            });
+        }
+
+        function updateURL() {
+            const params = new URLSearchParams();
+            const currentParams = new URLSearchParams(window.location.search);
+            if (currentParams.has('search')) {
+                params.set('search', currentParams.get('search'));
+            }
+            Object.keys(state.filters).forEach(key => {
+                if (key !== 'price' && state.filters[key].length > 0) {
+                    params.set(key, state.filters[key].join(','));
+                } else {
+                    if (key !== 'search') params.delete(key);
+                }
+            });
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            history.pushState({}, '', newUrl);
+        }
+
+        function updateCheckboxesFromState() {
+            const allCheckboxes = filtersContainer.querySelectorAll('input[type="checkbox"]');
+            allCheckboxes.forEach(cb => {
+                const key = cb.dataset.key;
+                const value = cb.value;
+                cb.checked = state.filters[key]?.includes(value) ?? false;
+            });
+        }
+
+        function addEventListeners() {
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            const navLinks = document.getElementById('main-nav');
+            mobileMenuBtn.addEventListener('click', () => {
+                const isActive = navLinks.classList.toggle('active');
+                mobileMenuBtn.classList.toggle('active', isActive);
+                mobileMenuBtn.innerHTML = isActive ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            });
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (navLinks.classList.contains('active')) {
+                        if (link.closest('.mobile-actions')) return;
+                        e.preventDefault();
+                        navLinks.style.transform = 'translateX(-100%)';
+                        mobileMenuBtn.classList.remove('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                        setTimeout(() => {
+                            navLinks.classList.remove('active');
+                            navLinks.style.transform = '';
+                            window.location.href = link.href;
+                        }, 400);
+                    }
+                });
+            });
+
+            closeModalBtn.addEventListener('click', closeLoginModal);
+            window.addEventListener('click', (e) => { if (e.target == loginModal) closeLoginModal(); });
+            setupGuestInteractions();
+            const mobileSearchForm = document.querySelector('.mobile-search .search-box');
+            if (mobileSearchForm) {
+                const mobileSearchInput = mobileSearchForm.querySelector('input');
+                mobileSearchForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const query = mobileSearchInput.value.trim();
+                    if (query) { window.location.href = `/catalog.html?search=${encodeURIComponent(query)}`; }
+                });
+            }
+
+            productsGrid.addEventListener('click', function(e) {
+                const cartButton = e.target.closest('.add-to-cart-btn');
+                const wishlistButton = e.target.closest('.wishlist-toggle-btn');
+                if (cartButton) {
+                    e.preventDefault(); e.stopPropagation();
+                    addToCart(cartButton.dataset.productId, cartButton);
+                } else if (wishlistButton) {
+                    e.preventDefault(); e.stopPropagation();
+                    toggleWishlist(wishlistButton.dataset.productId);
+                } else {
+                    const card = e.target.closest('.product-card');
+                    if (card && card.dataset.url) { window.location.href = card.dataset.url; }
+                }
+            });
+
+            filtersContainer.addEventListener('change', e => {
+                if (e.target.type !== 'checkbox') return;
+                const key = e.target.dataset.key;
+                const value = e.target.value;
+                const isChecked = e.target.checked;
+                if (isChecked) {
+                    if (!state.filters[key].includes(value)) state.filters[key].push(value);
+                } else {
+                    state.filters[key] = state.filters[key].filter(v => v !== value);
+                }
+                if (isChecked) {
+                    if (key === 'appellation') {
+                        const region = appellationToRegionMap[value];
+                        if (region && !state.filters.region.includes(region)) {
+                            state.filters.region.push(region);
+                            const country = regionToCountryMap[region];
+                            if (country && !state.filters.country.includes(country)) { state.filters.country.push(country); }
+                        }
+                    } else if (key === 'region') {
+                        const country = regionToCountryMap[value];
+                        if (country && !state.filters.country.includes(country)) { state.filters.country.push(country); }
+                    }
+                } else {
+                    if (key === 'country') {
+                        const regionsToClear = countryToRegionsMap[value] || [];
+                        regionsToClear.forEach(region => {
+                            const appellationsToClear = regionToAppellationsMap[region] || [];
+                            appellationsToClear.forEach(appellation => { state.filters.appellation = state.filters.appellation.filter(a => a !== appellation); });
+                            state.filters.region = state.filters.region.filter(r => r !== region);
+                        });
+                    } else if (key === 'region') {
+                        const appellationsToClear = regionToAppellationsMap[value] || [];
+                        appellationsToClear.forEach(appellation => { state.filters.appellation = state.filters.appellation.filter(a => a !== appellation); });
+                    }
+                }
+                updateCheckboxesFromState();
+                if (key === 'category') { renderSweetnessFilter(); }
+                runFilterAndSort();
+            });
+            
+            filtersContainer.addEventListener('input', e => {
+                if (e.target.id === 'price-slider-min' || e.target.id === 'price-slider-max') {
+                    const minSlider = document.getElementById('price-slider-min');
+                    const maxSlider = document.getElementById('price-slider-max');
+                    let minVal = parseInt(minSlider.value);
+                    let maxVal = parseInt(maxSlider.value);
+                    if (maxVal < minVal) { [minVal, maxVal] = [maxVal, minVal]; minSlider.value = minVal; maxSlider.value = maxVal; }
+                    state.filters.price.min = minVal;
+                    state.filters.price.max = maxVal;
+                    document.getElementById('price-min-label').textContent = `$${minVal}`;
+                    document.getElementById('price-max-label').textContent = `$${maxVal}`;
+                    const range = maxSlider.max - maxSlider.min;
+                    const minPercent = ((minVal - minSlider.min) / range) * 100;
+                    const maxPercent = ((maxVal - minSlider.min) / range) * 100;
+                    document.querySelector('.price-slider-range').style.left = `${minPercent}%`;
+                    document.querySelector('.price-slider-range').style.width = `${maxPercent - minPercent}%`;
+                }
+            });
+
+            filtersContainer.addEventListener('change', e => {
+                 if (e.target.id === 'price-slider-min' || e.target.id === 'price-slider-max') { runFilterAndSort(); }
+            });
+
+            activeFiltersContainer.addEventListener('click', e => {
+                if (e.target.tagName === 'BUTTON') {
+                    const key = e.target.dataset.key;
+                    const value = e.target.dataset.value;
+                    const checkbox = document.getElementById(`filter-${key}-${generateSlug(value)}`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                }
+            });
+
+            sortSelect.addEventListener('change', runFilterAndSort);
+
+            resetFiltersBtn.addEventListener('click', () => {
+                Object.keys(state.filters).forEach(key => {
+                    if (key !== 'price') { state.filters[key] = []; }
+                });
+                const minSlider = document.getElementById('price-slider-min');
+                const maxSlider = document.getElementById('price-slider-max');
+                if (minSlider && maxSlider) {
+                    const minPrice = parseInt(minSlider.min);
+                    const maxPrice = parseInt(maxSlider.max);
+                    state.filters.price.min = minPrice;
+                    state.filters.price.max = maxPrice;
+                    minSlider.value = minPrice;
+                    maxSlider.value = maxPrice;
+                    document.getElementById('price-min-label').textContent = `$${minPrice}`;
+                    document.getElementById('price-max-label').textContent = `$${maxPrice}`;
+                    document.querySelector('.price-slider-range').style.left = `0%`;
+                    document.querySelector('.price-slider-range').style.width = `100%`;
+                }
+                updateCheckboxesFromState();
+                renderSweetnessFilter();
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.delete('search');
+                history.pushState({}, '', currentUrl);
+                runFilterAndSort();
+            });
+
+            document.getElementById('grid-view-btn').addEventListener('click', () => {
+                productsGrid.classList.remove('list-view');
+                productsGrid.classList.add('grid-view');
+                document.getElementById('grid-view-btn').classList.add('active');
+                document.getElementById('list-view-btn').classList.remove('active');
+            });
+            document.getElementById('list-view-btn').addEventListener('click', () => {
+                productsGrid.classList.remove('grid-view');
+                productsGrid.classList.add('list-view');
+                document.getElementById('list-view-btn').classList.add('active');
+                document.getElementById('grid-view-btn').classList.remove('active');
+            });
+
+            loadMoreBtn.addEventListener('click', () => renderProducts(false));
+
+            document.querySelector('.mobile-filters-btn').addEventListener('click', () => {
+                const sidebar = document.querySelector('.filters-sidebar');
+                sidebar.classList.toggle('active');
+                const btnText = sidebar.classList.contains('active') ? 'Hide Filters' : 'Show Filters';
+                document.querySelector('.mobile-filters-btn span').textContent = btnText;
+            });
+        }
+
+        setTimeout(() => {
+            fetchProductsAndInit();
+        }, 100);
+    });
+    </script>
+</body>
+</html>
