@@ -1,0 +1,28 @@
+{
+  "hosting": {
+    "public": ".", 
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/catalog/**",
+        "destination": "/catalog.html"
+      },
+      {
+        "source": "/product/**", 
+        "destination": "/product.html"
+      },
+      {
+        "source": "/:category",
+        "destination": "/catalog.html"
+      },
+      {
+        "source": "/:category/:product",
+        "destination": "/product.html"
+      }
+    ]
+  }
+}
