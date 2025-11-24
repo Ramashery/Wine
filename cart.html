@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - VinoElite</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #c19a6b;
+            --primary-dark: #a67c52;
+            --primary-light: #e8c8a0;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #0f0f0f;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --text-light: #f5f5f5;
+            --text-muted: #b0b0b0;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-darker) 0%, #2d1b1b 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .loader-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+        .loader {
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background-color: var(--bg-card);
+            color: var(--text-light);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.5s, transform 0.5s;
+            transform: translateY(20px);
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { border-left: 4px solid var(--success-color); }
+        .toast.danger { border-left: 4px solid var(--danger-color); }
+        .toast.info { border-left: 4px solid var(--primary-color); }
+        
+        header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+            height: 75px;
+        }
+        
+        .header-content { display: flex; justify-content: space-between; align-items: center; height: 100%; }
+        .logo { font-size: 1.8rem; font-weight: 300; letter-spacing: 2px; color: var(--primary-light); text-decoration: none; }
+        .logo span { font-weight: 600; }
+        .nav-links { display: flex; gap: 30px; }
+        .nav-links a { color: var(--text-light); text-decoration: none; font-size: 0.9rem; letter-spacing: 1px; transition: color 0.3s ease; }
+        .nav-links a:hover { color: var(--primary-light); }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .search-btn, .wishlist-btn, .cart-btn {
+            position: relative;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            font-size: 1.2rem;
+            padding: 8px 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        .search-btn:hover, .wishlist-btn:hover, .cart-btn:hover {
+            color: var(--primary-light);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .cart-count-badge, .wishlist-count-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--primary-color);
+            color: var(--bg-dark);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        .auth-btn:hover {
+            background: var(--primary-color);
+            color: var(--bg-dark);
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(193, 154, 107, 0.3);
+        }
+        
+        .mobile-actions {
+            display: none;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border-color);
+        }
+        .mobile-search {
+            margin-bottom: 20px;
+        }
+        .search-box {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+        }
+        .search-box input {
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            padding: 12px 15px;
+            font-size: 1rem;
+        }
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+        .search-box button {
+            background: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            color: var(--bg-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .search-box button:hover {
+            background: var(--primary-light);
+        }
+        .mobile-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .mobile-action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-color);
+            transform: translateX(5px);
+        }
+        .mobile-action-btn i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .mobile-action-btn .cart-count,
+        .mobile-action-btn .wishlist-count {
+            background: var(--primary-color);
+            color: var(--bg-dark);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        .mobile-menu-btn { display: none; background: none; border: none; color: var(--text-light); font-size: 1.5rem; z-index: 1001; cursor: pointer; }
+
+        .breadcrumb-section { padding: 20px 0; }
+        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); }
+        .breadcrumb a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .breadcrumb a:hover { color: var(--primary-light); }
+        
+        .cart-section { padding: 40px 0 80px; }
+        .cart-container { display: grid; grid-template-columns: 1fr 350px; gap: 40px; align-items: start; }
+        
+        .cart-items { background: var(--bg-card); border-radius: 15px; padding: 30px; border: 1px solid var(--border-color); }
+        .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        .cart-title { font-size: 1.8rem; font-weight: 400; color: var(--primary-light); }
+        .cart-count { color: var(--text-muted); }
+        
+        .empty-cart { text-align: center; padding: 60px 20px; }
+        .empty-cart i { font-size: 4rem; color: var(--text-muted); margin-bottom: 20px; opacity: 0.5; }
+        .empty-cart h3 { font-size: 1.5rem; margin-bottom: 15px; font-weight: 400; }
+        .empty-cart p { color: var(--text-muted); margin-bottom: 30px; }
+        .btn-continue-shopping { display: inline-flex; align-items: center; gap: 10px; background: var(--primary-color); color: var(--bg-dark); text-decoration: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
+        .btn-continue-shopping:hover { background: var(--primary-light); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        
+        .cart-item { display: grid; grid-template-columns: 120px 1fr auto; gap: 20px; padding: 25px 0; border-bottom: 1px solid var(--border-color); }
+        .cart-item:last-child { border-bottom: none; }
+        
+        /* <-- ИЗМЕНЕНИЕ 3: Стили для ссылок на товары --- */
+        .item-image-link {
+            width: 120px;
+            height: 160px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: block;
+        }
+        .item-image-link img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .item-image-link:hover img {
+            transform: scale(1.05);
+        }
+        .item-name-link {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        .item-name-link:hover {
+            color: var(--primary-light);
+            text-decoration: underline;
+        }
+        /* --- Конец изменений --- */
+
+        .item-details { display: flex; flex-direction: column; justify-content: space-between; }
+        .item-name { font-size: 1.3rem; font-weight: 500; margin-bottom: 8px; }
+        .item-meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; }
+        .item-actions { display: flex; gap: 15px; }
+        .btn-remove { background: none; border: none; color: var(--danger-color); cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
+        .btn-remove:hover { color: #ff6b6b; }
+        .btn-move-to-wishlist { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 5px; }
+        .btn-move-to-wishlist:hover { color: var(--primary-light); }
+        
+        .item-controls { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; }
+        .item-price { font-size: 1.5rem; font-weight: 500; color: var(--primary-light); margin-bottom: 15px; }
+        .quantity-selector { display: flex; align-items: center; background: rgba(0, 0, 0, 0.2); border-radius: 8px; border: 1px solid var(--border-color); }
+        .quantity-btn { background: none; border: none; color: var(--text-light); font-size: 1.2rem; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .quantity-input { background: none; border: none; color: var(--text-light); text-align: center; width: 50px; font-size: 1.1rem; }
+        
+        .cart-summary { background: var(--bg-card); border-radius: 15px; padding: 30px; border: 1px solid var(--border-color); position: sticky; top: 120px; }
+        .summary-title { font-size: 1.5rem; margin-bottom: 25px; font-weight: 400; color: var(--primary-light); border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .summary-label { color: var(--text-muted); }
+        .summary-value { font-weight: 500; }
+        .summary-total { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 15px; font-size: 1.3rem; font-weight: 600; color: var(--primary-light); }
+        
+        .shipping-notice { background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 15px; margin: 20px 0; font-size: 0.9rem; }
+        .shipping-notice i { color: var(--warning-color); margin-right: 8px; }
+        
+        .btn-checkout { width: 100%; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%); color: var(--bg-dark); border: none; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-checkout:hover { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(193, 154, 107, 0.4); }
+        .btn-checkout:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
+        
+        .secure-checkout { text-align: center; margin-top: 15px; color: var(--text-muted); font-size: 0.8rem; }
+        .secure-checkout i { color: var(--success-color); margin-right: 5px; }
+        
+        footer { background: var(--bg-darker); padding: 60px 0 30px; border-top: 1px solid var(--border-color); }
+        .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer-column h3 { font-size: 1.2rem; margin-bottom: 20px; font-weight: 400; color: var(--primary-light); }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 10px; }
+        .footer-links a { color: var(--text-muted); text-decoration: none; transition: color 0.3s ease; }
+        .footer-links a:hover { color: var(--primary-light); }
+        .social-links { display: flex; gap: 15px; margin-top: 20px; }
+        .social-links a { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; color: var(--text-light); text-decoration: none; transition: all 0.3s ease; }
+        .social-links a:hover { background: var(--primary-color); color: var(--bg-dark); transform: translateY(-3px); }
+        .footer-bottom { text-align: center; padding-top: 30px; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem; }
+
+        @media (max-width: 992px) {
+            .cart-container { grid-template-columns: 1fr; }
+            .cart-summary { position: static; }
+        }
+        
+        @media (max-width: 768px) {
+            .header-actions .desktop-only { display: none; }
+            .header-actions { display: flex; gap: 0; }
+            .nav-links.active .mobile-actions { display: block; }
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 75px;
+                left: 0;
+                width: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 20px;
+                border-bottom: 1px solid var(--border-color);
+                max-height: calc(100vh - 75px);
+                overflow-y: auto;
+                gap: 20px;
+            }
+            .nav-links.active { display: flex; }
+            .nav-links a:not(.mobile-action-btn) { font-size: 1.1rem; }
+            .mobile-menu-btn { display: block; }
+            
+            .cart-item { grid-template-columns: 100px 1fr; }
+            .item-controls { grid-column: 1 / -1; display: flex; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 15px; }
+            .item-price { margin-bottom: 0; }
+        }
+        
+        @media (max-width: 576px) {
+            .cart-item { grid-template-columns: 1fr; text-align: center; }
+            .item-image-link { justify-self: center; }
+            .item-controls { flex-direction: column; gap: 15px; }
+            .item-price { order: -1; }
+        }
+        @media (max-width: 480px) {
+            .mobile-action-btn { padding: 12px 15px; font-size: 0.95rem; }
+            .search-box input { padding: 10px 15px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                
+                <nav class="nav-links" id="main-nav">
+                    <a href="/index.html">Home</a>
+                    <a href="/catalog.html">Catalog</a>
+                    <a href="#">Collections</a>
+                    <a href="#">Wineries</a>
+                    <a href="#">About Us</a>
+                    
+                    <div class="mobile-actions">
+                        <div class="mobile-search">
+                            <form class="search-box">
+                                <input type="text" placeholder="Search wines...">
+                                <button type="submit"><i class="fas fa-search"></i></button>
+                            </form>
+                        </div>
+                        
+                        <a href="/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                            <i class="far fa-user"></i>
+                            <span>My Account</span>
+                        </a>
+                        
+                        <a href="/cart.html" class="mobile-action-btn">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Shopping Cart</span>
+                            <span class="cart-count">0</span>
+                        </a>
+                        
+                        <a href="/profile.html#wishlist" class="mobile-action-btn">
+                            <i class="far fa-heart"></i>
+                            <span>Wishlist</span>
+                            <span class="wishlist-count">0</span>
+                        </a>
+                    </div>
+                </nav>
+    
+                <div class="header-actions">
+                    <button class="search-btn desktop-only" title="Search"><i class="fas fa-search"></i></button>
+                    <a href="/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist">
+                        <i class="far fa-heart"></i>
+                        <span class="wishlist-count-badge">0</span>
+                    </a>
+                    <a href="/profile.html" class="auth-btn desktop-only" id="auth-button" title="My Account">
+                        <i class="far fa-user"></i>
+                        <span class="auth-text">My Account</span>
+                    </a>
+                    <a href="/cart.html" class="cart-btn desktop-only" title="Cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count-badge">0</span>
+                    </a>
+                </div>
+    
+                <button class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <section class="breadcrumb-section">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="/index.html">Home</a> / <span>Shopping Cart</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cart-section">
+        <div class="container">
+            <div class="cart-container">
+                <div class="cart-items">
+                    <div class="cart-header">
+                        <h2 class="cart-title">Shopping Cart</h2>
+                        <div class="cart-count" id="cart-items-count">0 items</div>
+                    </div>
+                    
+                    <div id="cart-items-container">
+                        <!-- Cart items will be dynamically inserted here -->
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <h3 class="summary-title">Order Summary</h3>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Subtotal</span>
+                        <span class="summary-value" id="summary-subtotal">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Shipping</span>
+                        <span class="summary-value" id="summary-shipping">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">Tax (Est.)</span>
+                        <span class="summary-value" id="summary-tax">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row summary-total">
+                        <span class="summary-label">Total</span>
+                        <span class="summary-value" id="summary-total">$0.00</span>
+                    </div>
+                    
+                    <div class="shipping-notice">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>Free shipping on orders over $200</span>
+                    </div>
+                    
+                    <button class="btn-checkout" id="checkout-btn" disabled>
+                        <i class="fas fa-lock"></i>
+                        <span>Proceed to Checkout</span>
+                    </button>
+                    
+                    <div class="secure-checkout">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure checkout guaranteed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="toast-container" id="toast-container"></div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>VinoElite</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Shipping & Payment</a></li>
+                        <li><a href="#">Returns</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Catalog</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Red Wines</a></li>
+                        <li><a href="#">White Wines</a></li>
+                        <li><a href="#">Sparkling Wines</a></li>
+                        <li><a href="#">Spirits</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Help</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Terms of Use</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Sitemap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contacts</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                        <li><i class="fas fa-envelope"></i> info@vinoelite.com</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li>
+                    </ul>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-telegram"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 VinoElite. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+    // Firebase Initialization
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    const firebaseConfig = { apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk", authDomain: "wine-91d0e.firebaseapp.com", projectId: "wine-91d0e", storageBucket: "wine-91d0e.firebasestorage.app", messagingSenderId: "1021620433427", appId: "1:1021620433427:web:5439252fb350c4455a85e6", measurementId: "G-TRWHY3KXK1" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const CART_STORAGE_KEY = 'vinoelite_cart';
+    let cartItems = [];
+    let wishlistProductIds = new Set();
+    let debounceTimer;
+
+    // <-- ИЗМЕНЕНИЕ 1: Добавлена функция для создания slug (как в catalog.html) ---
+    function generateSlug(text) {
+        if (!text) return '';
+        return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    }
+
+    function showLoader() { document.getElementById('cart-items-container').innerHTML = `<div class="loader-container"><div class="loader"></div></div>`; }
+    function showToast(message, type = 'info') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
+
+    function updateHeaderCounters() {
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        document.querySelectorAll('.cart-count, .cart-count-badge').forEach(el => { el.textContent = totalItems; el.style.display = totalItems > 0 ? 'flex' : 'none'; });
+        document.querySelectorAll('.wishlist-count, .wishlist-count-badge').forEach(el => { el.textContent = wishlistProductIds.size; el.style.display = wishlistProductIds.size > 0 ? 'flex' : 'none'; });
+    }
+
+    function updateUIForAuthState(user) {
+        const desktopAuthBtn = document.getElementById('auth-button');
+        const mobileAuthBtn = document.getElementById('mobile-auth-button');
+        if (user) {
+            const userName = user.displayName || user.email.split('@')[0];
+            desktopAuthBtn.href = "/profile.html";
+            desktopAuthBtn.innerHTML = `<i class="fas fa-user-check"></i> <span class="auth-text">${userName}</span>`;
+            desktopAuthBtn.title = "My Account";
+            mobileAuthBtn.href = "/profile.html";
+            mobileAuthBtn.querySelector('span').textContent = userName;
+        } else {
+            // Ссылки на header-actions ведут на profile.html, где есть логика редиректа на главную для неавторизованных
+            desktopAuthBtn.href = "/profile.html"; 
+            desktopAuthBtn.innerHTML = `<i class="far fa-user"></i> <span class="auth-text">Sign In</span>`;
+            desktopAuthBtn.title = "Sign In";
+            mobileAuthBtn.href = "/profile.html";
+            mobileAuthBtn.querySelector('span').textContent = 'Sign In / Register';
+        }
+        // Обновляем ссылки на корзину и wishlist
+        document.querySelectorAll('.cart-btn, a[href="/cart.html"]').forEach(el => el.href = "/cart.html");
+        document.querySelectorAll('.wishlist-btn, a[href*="wishlist"]').forEach(el => el.href = "/profile.html#wishlist");
+    }
+
+    async function getCartItems(user) { if (user) { const cartSnapshot = await getDocs(collection(db, `users/${user.uid}/cart`)); return cartSnapshot.docs.map(doc => ({ productId: doc.id, quantity: doc.data().quantity, addedAt: doc.data().addedAt })); } else { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || []; } }
+    function debouncedSaveCart() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { saveCartItems(auth.currentUser, cartItems); }, 1000); }
+    async function saveCartItems(user, items) { if (user) { const batch = writeBatch(db); const cartCollectionRef = collection(db, `users/${user.uid}/cart`); const currentCartSnapshot = await getDocs(cartCollectionRef); const firestoreProductIds = new Set(currentCartSnapshot.docs.map(d => d.id)); const localProductIds = new Set(items.map(i => i.productId)); firestoreProductIds.forEach(id => { if (!localProductIds.has(id)) { batch.delete(doc(cartCollectionRef, id)); } }); items.forEach(item => { const itemRef = doc(cartCollectionRef, item.productId); batch.set(itemRef, { quantity: item.quantity, addedAt: item.addedAt || new Date() }); }); await batch.commit(); } else { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items)); } }
+    async function syncCartOnAuth(user) { const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || []; if (localCart.length === 0) { return await getCartItems(user); } const firestoreCart = await getCartItems(user); const mergedCart = [...firestoreCart]; const firestoreProductIds = new Set(firestoreCart.map(item => item.productId)); localCart.forEach(localItem => { if (!firestoreProductIds.has(localItem.productId)) { mergedCart.push(localItem); } }); await saveCartItems(user, mergedCart); localStorage.removeItem(CART_STORAGE_KEY); return mergedCart; }
+    async function getProductDetails(productId) { try { const productDoc = await getDoc(doc(db, "products", productId)); return productDoc.exists() ? { id: productDoc.id, ...productDoc.data() } : null; } catch (error) { console.error("Error fetching product:", error); return null; } }
+    async function fetchWishlistIds(user) { if (!user) return new Set(); const userDoc = await getDoc(doc(db, "users", user.uid)); if (userDoc.exists() && userDoc.data().wishlist) { return new Set(userDoc.data().wishlist); } return new Set(); }
+
+    function updateSummary(subtotal) { const shippingCost = subtotal > 200 || subtotal === 0 ? 0 : 15.00; const tax = subtotal * 0.08; const total = subtotal + shippingCost + tax; document.getElementById('summary-subtotal').textContent = `$${subtotal.toFixed(2)}`; document.getElementById('summary-shipping').textContent = shippingCost === 0 ? 'Free' : `$${shippingCost.toFixed(2)}`; document.getElementById('summary-tax').textContent = `$${tax.toFixed(2)}`; document.getElementById('summary-total').textContent = `$${total.toFixed(2)}`; }
+    function renderEmptyCart() { document.getElementById('cart-items-container').innerHTML = `<div class="empty-cart"><i class="fas fa-shopping-cart"></i><h3>Your cart is empty</h3><p>Add some exquisite wines to your cart and they will appear here.</p><a href="/catalog.html" class="btn-continue-shopping"><i class="fas fa-wine-bottle"></i><span>Continue Shopping</span></a></div>`; document.getElementById('cart-items-count').textContent = '0 items'; document.getElementById('checkout-btn').disabled = true; updateSummary(0); }
+
+    async function renderCartItems() {
+        if (cartItems.length === 0) { renderEmptyCart(); updateHeaderCounters(); return; }
+        const productPromises = cartItems.map(item => getProductDetails(item.productId));
+        const products = await Promise.all(productPromises);
+        const validItems = cartItems.filter((item, index) => products[index] !== null);
+        const validProducts = products.filter(product => product !== null);
+        if (validItems.length !== cartItems.length) { cartItems = validItems; debouncedSaveCart(); }
+        if (cartItems.length === 0) { renderEmptyCart(); updateHeaderCounters(); return; }
+
+        let itemsHTML = '';
+        let subtotal = 0;
+        
+        validItems.forEach((item, index) => {
+            const product = validProducts[index];
+            
+            // <-- ИЗМЕНЕНИЕ 2: Создаем правильный URL для страницы товара ---
+            const categorySlug = generateSlug(product.category);
+            const productUrl = `/${categorySlug}/${product.slug}`;
+            
+            const itemTotal = product.price * item.quantity;
+            subtotal += itemTotal;
+            const imageUrl = product.imageUrl || (product.imageUrls && product.imageUrls[0]) || '/images/placeholder-wine.jpg';
+            
+            // <-- ИЗМЕНЕНИЕ 2: Оборачиваем изображение и название в тег <a> с правильным href ---
+            itemsHTML += `
+                <div class="cart-item" data-product-id="${item.productId}">
+                    <a href="${productUrl}" class="item-image-link">
+                        <img src="${imageUrl}" alt="${product.name}">
+                    </a>
+                    <div class="item-details">
+                        <div>
+                            <h3 class="item-name">
+                                <a href="${productUrl}" class="item-name-link">${product.name}</a>
+                            </h3>
+                            <div class="item-meta">${product.category} • ${product.country} • ${product.volume}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-remove" data-product-id="${item.productId}"><i class="fas fa-trash"></i><span>Remove</span></button>
+                            <button class="btn-move-to-wishlist" data-product-id="${item.productId}"><i class="fas fa-heart"></i><span>Move to Wishlist</span></button>
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <div class="item-price">$${itemTotal.toFixed(2)}</div>
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus" data-product-id="${item.productId}">-</button>
+                            <input type="text" class="quantity-input" value="${item.quantity}" readonly>
+                            <button class="quantity-btn plus" data-product-id="${item.productId}">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('cart-items-container').innerHTML = itemsHTML;
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        document.getElementById('cart-items-count').textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
+        document.getElementById('checkout-btn').disabled = false;
+        updateSummary(subtotal);
+        updateHeaderCounters();
+        setupCartEventListeners();
+    }
+
+    async function updateCartItemQuantity(productId, newQuantity) { if (newQuantity < 1) { await removeCartItem(productId); return; } const itemIndex = cartItems.findIndex(item => item.productId === productId); if (itemIndex !== -1) { cartItems[itemIndex].quantity = newQuantity; await renderCartItems(); debouncedSaveCart(); } }
+    async function removeCartItem(productId) { cartItems = cartItems.filter(item => item.productId !== productId); showToast('Item removed from cart.', 'danger'); await renderCartItems(); debouncedSaveCart(); }
+    async function moveToWishlist(productId) { const user = auth.currentUser; if (!user) { showToast('Please sign in to use the wishlist.', 'info'); return; } try { if (wishlistProductIds.has(productId)) { showToast('Item is already in your wishlist.', 'info'); } else { const userDocRef = doc(db, "users", user.uid); await updateDoc(userDocRef, { wishlist: arrayUnion(productId) }); wishlistProductIds.add(productId); showToast('Item moved to wishlist!', 'success'); } await removeCartItem(productId); } catch (error) { console.error("Error moving to wishlist:", error); showToast('Could not move item to wishlist.', 'danger'); } }
+
+    function setupCartEventListeners() {
+        document.querySelectorAll('.quantity-btn.minus').forEach(btn => btn.addEventListener('click', () => { const productId = btn.dataset.productId; const item = cartItems.find(i => i.productId === productId); if (item) updateCartItemQuantity(productId, item.quantity - 1); }));
+        document.querySelectorAll('.quantity-btn.plus').forEach(btn => btn.addEventListener('click', () => { const productId = btn.dataset.productId; const item = cartItems.find(i => i.productId === productId); if (item) updateCartItemQuantity(productId, item.quantity + 1); }));
+        document.querySelectorAll('.btn-remove').forEach(btn => btn.addEventListener('click', () => removeCartItem(btn.dataset.productId)));
+        document.querySelectorAll('.btn-move-to-wishlist').forEach(btn => btn.addEventListener('click', () => moveToWishlist(btn.dataset.productId)));
+        document.getElementById('checkout-btn').addEventListener('click', () => { if (cartItems.length > 0) { if (auth.currentUser) { alert('Proceeding to checkout... (Checkout functionality to be implemented)'); } else { showToast('Please sign in to proceed to checkout.', 'info'); } } });
+    }
+
+    function setupMobileMenu() { const mobileMenuBtn = document.querySelector('.mobile-menu-btn'); const navLinks = document.getElementById('main-nav'); if (mobileMenuBtn && navLinks) { mobileMenuBtn.addEventListener('click', () => { navLinks.classList.toggle('active'); mobileMenuBtn.innerHTML = navLinks.classList.contains('active') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>'; }); } }
+
+    async function initializeCartPage() {
+        setupMobileMenu();
+        showLoader();
+        onAuthStateChanged(auth, async (user) => {
+            updateUIForAuthState(user);
+            if (user) {
+                wishlistProductIds = await fetchWishlistIds(user);
+                cartItems = await syncCartOnAuth(user);
+            } else {
+                wishlistProductIds.clear();
+                cartItems = await getCartItems(null);
+            }
+            await renderCartItems();
+        });
+    }
+
+    initializeCartPage();
+    </script>
+</body>
+</html>
