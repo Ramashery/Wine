@@ -1,0 +1,23 @@
+name: Deploy Wine Project to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy_to_firebase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          # Используем секрет, созданный для проекта Wine
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_WINE }}'
+          channelId: live
+          # Указываем ID вашего нового проекта Wine
+          projectId: 'wine-91d0e'
