@@ -7,14 +7,12 @@
       "**/node_modules/**"
     ],
     "rewrites": [
-      // Правило для "красивых" URL категорий (например, /red-wine)
-      // Оно перенаправляет запрос на catalog.html
+      
       {
         "source": "/:category",
         "destination": "/catalog.html"
       },
-      // Правило для "красивых" URL продуктов (например, /red-wine/chateau-margaux)
-      // Оно перенаправляет запрос на product.html
+      
       {
         "source": "/:category/:slug",
         "destination": "/product.html"
