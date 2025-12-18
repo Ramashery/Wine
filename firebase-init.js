@@ -7,9 +7,8 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/9.15.0/firebase
 // 2. Ваши ключи для подключения к проекту "Wine" на Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
-  authDomain: "wine-91d0e.firebaseapp.com",
+  authDomain: "wine-91d0e.web.app",
   projectId: "wine-91d0e",
-  // ВОТ ИСПРАВЛЕННАЯ СТРОКА
   storageBucket: "wine-91d0e.firebasestorage.app", 
   messagingSenderId: "1021620433427",
   appId: "1:1021620433427:web:5439252fb350c4455a85e6",

@@ -1,0 +1,13 @@
+# Node and build artifacts
+node_modules
+dist
+package-lock.json
+
+# Service account credentials
+vino-elite-firebase-adminsdk-key.json
+
+# IDE-specific
+.idea
+.vscode
+*.swp
+*.swo
