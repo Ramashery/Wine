@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ t.meta_title_catalog }}</title>
+    <meta name="description" content="{{ t.meta_description_catalog }}">
+
+    {% for code in languages.keys() %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ site_url }}{{ alt_urls[code] }}">
+    {% endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ alt_urls['en'] }}">
+    <link rel="canonical" href="{{ site_url }}{{ page_url }}">
+
+    <meta property="og:title" content="{{ t.meta_title_catalog }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="{{ t.meta_description_catalog }}" />
+    <meta property="og:url" content="{{ site_url }}{{ page_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+    <meta property="og:locale" content="{{ og_locale }}" />
+
+    <script type="application/ld+json">{{ breadcrumb_json }}</script>
+    <script type="application/ld+json">{{ schema_json }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset_path }}css/style.css">
+</head>
+<body>
+    {% include "partials/header.html" %}
+
+    <div class="container">
+        <div class="breadcrumb"><a href="{{ url_for('index', lang) }}">{{ t.breadcrumb_home }}</a> / <span>{{ t.breadcrumb_catalog }}</span></div>
+    </div>
+
+    <section class="catalog-section">
+        <div class="container">
+            <h1 class="page-title">{{ t.catalog_title }}</h1>
+            <button class="show-filters-btn" id="toggle-filters-btn"><i class="fas fa-sliders-h"></i> <span>{{ t.show_filters }}</span></button>
+
+            <div class="catalog-layout">
+                <aside class="filters-sidebar">
+                    <div class="filters-header">
+                        <h2 class="filters-title">{{ t.filters }}</h2>
+                        <button class="reset-filters" id="reset-filters-btn">{{ t.reset_all }}</button>
+                    </div>
+
+                    <div id="active-filters" class="active-filters"></div>
+
+                    {% macro filter_group(key, label, options) %}
+                    {% if options %}
+                    <div class="filter-group">
+                        <div class="filter-title"><span>{{ label }}</span></div>
+                        <div class="filter-content">
+                            {% for opt in options %}
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-{{ key }}-{{ loop.index }}" value="{{ opt }}" data-key="{{ key }}">
+                                <label for="filter-{{ key }}-{{ loop.index }}"><span>{{ opt }}</span></label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endmacro %}
+
+                    <div class="filter-group">
+                        <div class="filter-title"><span>{{ t.filter_category }}</span></div>
+                        <div class="filter-content">
+                            {% for cat in categories %}
+                            <div class="filter-option">
+                                <input type="checkbox" id="filter-category-{{ cat.id }}" value="{{ cat.id }}" data-key="category">
+                                <label for="filter-category-{{ cat.id }}"><span>{{ cat.name }}</span></label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {{ filter_group('country', t.filter_country, filter_options.country) }}
+                    {{ filter_group('region', t.filter_region, filter_options.region) }}
+                    {{ filter_group('appellation', t.filter_appellation, filter_options.appellation) }}
+                    {{ filter_group('grape', t.filter_grape, filter_options.grape) }}
+                    {{ filter_group('sweetness', t.filter_sweetness, filter_options.sweetness) }}
+                    {{ filter_group('volume', t.filter_volume, filter_options.volume) }}
+                    {{ filter_group('year', t.filter_year, filter_options.year) }}
+
+                    {% if filter_options.price_max > 0 %}
+                    <div class="filter-group">
+                        <div class="filter-title"><span id="price-filter-label">{{ t.price }}</span></div>
+                        <div class="filter-content">
+                            <div class="price-filter-inputs">
+                                <span id="price-min-label">${{ filter_options.price_min }}</span><span>-</span><span id="price-max-label">${{ filter_options.price_max }}</span>
+                            </div>
+                            <div class="price-slider-container">
+                                <input type="range" id="price-slider-min" min="{{ filter_options.price_min }}" max="{{ filter_options.price_max }}" value="{{ filter_options.price_min }}">
+                                <input type="range" id="price-slider-max" min="{{ filter_options.price_min }}" max="{{ filter_options.price_max }}" value="{{ filter_options.price_max }}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </aside>
+
+                <div class="products-area">
+                    <div class="products-toolbar">
+                        <div class="products-count" id="products-count"></div>
+                        <input type="text" id="catalog-search-input" class="catalog-search-input" placeholder="{{ t.search_placeholder }}">
+                        <select id="sort-select" class="sort-select">
+                            <option value="name-asc">{{ t.sort_name_asc }}</option>
+                            <option value="price-asc">{{ t.sort_price_asc }}</option>
+                            <option value="price-desc">{{ t.sort_price_desc }}</option>
+                        </select>
+                    </div>
+
+                    <div class="products-grid" id="products-grid">
+                        {% from "partials/product_card.html" import product_card %}
+                        {% for p in products %}
+                        {{ product_card(p, lang, t, eager=(loop.index0 < 4)) }}
+                        {% endfor %}
+                    </div>
+                    <p id="no-results" style="display:none;">{{ t.no_products }}</p>
+
+                    <button class="load-more-btn" id="load-more-btn">{{ t.load_more }}</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% include "partials/footer.html" %}
+    {% include "partials/modals.html" %}
+
+    <script type="module">
+        import { db, auth } from "{{ asset_path }}js/firebase-config.js";
+        import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { initSharedUI } from "{{ asset_path }}js/site.js";
+        import { initCatalogFilters } from "{{ asset_path }}js/catalog-filters.js";
+
+        const LANG = "{{ lang }}";
+        const BASE_PATH = "{{ base_path }}";
+        const I18N = {{ i18n_js }};
+        const CATEGORY_LABELS = {{ category_labels_js }};
+
+        initSharedUI({ db, auth, LANG, I18N, BASE_PATH, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+            signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+            doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, query, where });
+
+        initCatalogFilters({ LANG, I18N, CATEGORY_LABELS, hasCategoryFilter: true });
+    </script>
+</body>
+</html>

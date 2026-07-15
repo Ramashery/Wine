@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.meta_title_profile }}</title>
+    <!-- hreflang alternates for multilingual SEO -->
+    {% for code in languages.keys() %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ site_url }}{{ alt_urls[code] }}">
+    {% endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ alt_urls['en'] }}">
+    <link rel="canonical" href="{{ site_url }}{{ page_url }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset_path }}css/style.css">
+</head>
+<body>
+    <div id="loader">
+       <div class="spinner"></div>
+    </div>
+
+    <div id="main-site-content">
+        {% include "partials/header.html" %}
+
+        <section class="breadcrumb-section animate-on-scroll">
+            <div class="container">
+                <div class="breadcrumb">
+                    <a href="{{ url_for('index', lang) }}">{{ t.breadcrumb_home }}</a> / <span>{{ t.my_account }}</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="account-section">
+            <div class="container">
+                <div class="account-container">
+                    <aside class="account-sidebar animate-on-scroll">
+                        <div class="user-info">
+                            <div class="user-avatar" id="user-avatar"></div>
+                            <div class="user-details">
+                                <h3 id="user-display-name">{{ t.loading }}</h3>
+                                <p id="user-email">{{ t.loading }}</p>
+                            </div>
+                        </div>
+                        
+                        <ul class="account-menu">
+                            <li><a href="#wishlist" class="active" data-view="wishlist"><i class="fas fa-heart"></i> {{ t.menu_wishlist }}</a></li>
+                            <li><a href="{{ url_for('cart', lang) }}"><i class="fas fa-shopping-cart"></i> {{ t.menu_cart }}</a></li>
+                            <li><a href="#orders" data-view="orders"><i class="fas fa-shopping-bag"></i> {{ t.menu_orders }}</a></li>
+                            <li><a href="#addresses" data-view="addresses"><i class="fas fa-map-marker-alt"></i> {{ t.menu_addresses }}</a></li>
+                            <li><a href="#reviews" data-view="reviews"><i class="fas fa-star"></i> {{ t.menu_reviews }}</a></li>
+                            <li><a href="#settings" data-view="settings"><i class="fas fa-cog"></i> {{ t.menu_settings }}</a></li>
+                        </ul>
+                        
+                        <button class="sign-out-btn" id="sign-out-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>{{ t.sign_out }}</span>
+                        </button>
+                    </aside>
+                    
+                    <main class="account-content animate-on-scroll">
+                        <div id="account-view-orders" class="account-view">
+                            <h2>{{ t.order_history }}</h2>
+                            <div id="orders-list-container">
+                                <div class="empty-state">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    <p>{{ t.no_orders }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="account-view-addresses" class="account-view">
+                            <h2>{{ t.shipping_addresses }}</h2>
+                            <div class="addresses-list" id="addresses-list"></div>
+                            <button class="add-address-btn" id="add-address-btn">
+                                <i class="fas fa-plus"></i>
+                                <span>{{ t.add_new_address }}</span>
+                            </button>
+                        </div>
+                        
+                        <div id="account-view-wishlist" class="account-view">
+                            <h2>{{ t.my_wishlist }}</h2>
+                            <div class="wishlist-grid" id="wishlist-grid"></div>
+                        </div>
+                        
+                        <div id="account-view-reviews" class="account-view">
+                            <h2>{{ t.my_reviews }}</h2>
+                            <div id="reviews-list-container">
+                                <!-- Сюда будет вставлена таблица -->
+                            </div>
+                        </div>
+
+                        <div id="account-view-settings" class="account-view">
+                            <h2>{{ t.settings }}</h2>
+                            <form id="profile-settings-form">
+                                <div class="form-group">
+                                    <label for="display-name-input">{{ t.display_name }}</label>
+                                    <input type="text" id="display-name-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <button type="submit" class="btn-save">{{ t.save_changes }}</button>
+                                </div>
+                            </form>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </section>
+        
+        <div class="address-modal" id="address-modal">
+            <div class="address-modal-content">
+                <div class="address-modal-header">
+                    <h3 id="address-modal-title">{{ t.add_address_modal_title }}</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                
+                <form id="address-form">
+                    <input type="hidden" id="address-id">
+                    <div class="form-group">
+                        <label for="address-name">Address Name (e.g., Home, Office)</label>
+                        <input type="text" id="address-name" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first-name">{{ t.first_name }}</label>
+                            <input type="text" id="first-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="last-name">{{ t.last_name }}</label>
+                            <input type="text" id="last-name" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="address-line1">Address Line 1</label>
+                        <input type="text" id="address-line1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address-line2">Address Line 2 (Optional)</label>
+                        <input type="text" id="address-line2">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="city">{{ t.city }}</label>
+                            <input type="text" id="city" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State/Province</label>
+                            <input type="text" id="state" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="zip-code">ZIP/Postal Code</label>
+                            <input type="text" id="zip-code" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="country">{{ t.country }}</label>
+                            <select id="country" required>
+                                <option value="">{{ t.select_country }}</option>
+                                <option value="GE">{{ t.c_ge }}</option>
+                                <option value="AM">{{ t.c_am }}</option>
+                                <option value="AZ">{{ t.c_az }}</option>
+                                <option value="TR">{{ t.c_tr }}</option>
+                                <option value="RU">{{ t.c_ru }}</option>
+                                <option value="UA">{{ t.c_ua }}</option>
+                                <option value="US">{{ t.c_us }}</option>
+                                <option value="CA">{{ t.c_ca }}</option>
+                                <option value="UK">{{ t.c_uk }}</option>
+                                <option value="FR">{{ t.c_fr }}</option>
+                                <option value="IT">{{ t.c_it }}</option>
+                                <option value="ES">{{ t.c_es }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">{{ t.phone_number }}</label>
+                        <input type="tel" id="phone" required>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="default-address">
+                        <label for="default-address">{{ t.set_as_default }}</label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel">{{ t.cancel }}</button>
+                        <button type="submit" class="btn-save">{{ t.save_address }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="review-modal" id="review-modal">
+            <div class="review-modal-content">
+                <div class="review-modal-header">
+                    <h3 id="review-modal-title">{{ t.edit_review_title }}</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <form id="review-form">
+                    <input type="hidden" id="review-id">
+                    <input type="hidden" id="review-product-id">
+                    <div class="form-group">
+                        <label>{{ t.your_rating }}</label>
+                        <div class="star-rating">
+                            <input type="radio" id="star5" name="rating" value="5" required><label for="star5" title="5 stars">★</label>
+                            <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="4 stars">★</label>
+                            <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="3 stars">★</label>
+                            <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="2 stars">★</label>
+                            <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="1 star">★</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-title-input">{{ t.review_title_label }}</label>
+                        <input type="text" id="review-title-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="review-comment-input">{{ t.comment }}</label>
+                        <textarea id="review-comment-input" required></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel">{{ t.cancel }}</button>
+                        <button type="submit" class="btn-save">{{ t.save_changes }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% include "partials/modals.html" %}
+
+        {% include "partials/footer.html" %}
+    </div>
+
+    <script type="module">
+    // ===============================================================
+    // =================== FIREBASE INITIALIZATION ===================
+    // ===============================================================
+    import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { collection, doc, getDoc, setDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, writeBatch, arrayRemove, arrayUnion, collectionGroup, orderBy, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+    import { db, auth } from "{{ asset_path }}js/firebase-config.js";
+    import { flattenProduct, makeCategoryLabel } from "{{ asset_path }}js/site.js";
+
+    // --- i18n (generated from /locales/{lang}.json by generate_site.py) ---
+    const LANG = "{{ lang }}";
+        const BASE_PATH = "{{ base_path }}";
+    const I18N = {{ i18n_js }};
+    const CATEGORY_LABELS = {{ category_labels_js }};
+    const categoryLabel = makeCategoryLabel(CATEGORY_LABELS, LANG);
+
+    const CART_STORAGE_KEY = 'vinoelite_cart';
+    const WISHLIST_STORAGE_KEY = 'vinoelite_wishlist';
+    let userReviewsData = [];
+    let wishlistProductIds = new Set();
+
+    // ===============================================================
+    // =================== UI & HELPER FUNCTIONS =====================
+    // ===============================================================
+
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => toast.remove());
+        }, 3000);
+    }
+
+    async function createUserProfileDocument(userAuth) {
+        if (!userAuth) return;
+        const userRef = doc(db, "users", userAuth.uid);
+        const userSnapshot = await getDoc(userRef);
+        if (!userSnapshot.exists()) {
+            const { email, displayName } = userAuth;
+            const createdAt = new Date();
+            try {
+                await setDoc(userRef, {
+                    displayName: displayName || email.split('@')[0],
+                    email,
+                    createdAt,
+                    wishlist: [],
+                });
+            } catch (error) {
+                console.error("Error creating user profile", error.message);
+            }
+        }
+        return userRef;
+    }
+
+    // ===============================================================
+    // =================== AUTH & SYNC LOGIC =========================
+    // ===============================================================
+
+    const loginModal = document.getElementById('login-modal');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const desktopAuthBtn = document.getElementById('auth-button');
+    const mobileAuthBtn = document.getElementById('mobile-auth-button');
+    const authForm = document.getElementById('auth-form');
+    const emailInput = document.getElementById('auth-email');
+    const passwordInput = document.getElementById('auth-password');
+    const errorContainer = document.getElementById('auth-error');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+    function openLoginModal(e) { e.preventDefault(); loginModal.style.display = 'block'; }
+    function closeLoginModal() {
+        loginModal.style.display = 'none';
+        authForm.reset();
+        errorContainer.textContent = '';
+    }
+
+    document.getElementById('google-signin-btn').addEventListener('click', async () => {
+        try {
+            await signInWithPopup(auth, new GoogleAuthProvider());
+            closeLoginModal();
+        } catch (error) { errorContainer.textContent = error.message; }
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        const password = passwordInput.value;
+        errorContainer.textContent = '';
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            closeLoginModal();
+        } catch (error) {
+            if (error.code === 'auth/user-not-found') {
+                try {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    closeLoginModal();
+                } catch (createError) { errorContainer.textContent = createError.message; }
+            } else { errorContainer.textContent = error.message; }
+        }
+    });
+
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value;
+        if (!email) { alert('Please enter your email in the email field to reset the password.'); return; }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert('Password reset email sent! Please check your inbox.');
+        } catch (error) { alert(`Error: ${error.message}`); }
+    });
+
+    function updateUIForAuthState(user) {
+        if (user) {
+            const userName = user.displayName || user.email.split('@')[0];
+            desktopAuthBtn.href = `${BASE_PATH}/${LANG}/profile.html`;
+            desktopAuthBtn.innerHTML = `<i class="fas fa-user-check"></i> <span class="auth-text">${userName}</span>`;
+            desktopAuthBtn.title = "My Account";
+            desktopAuthBtn.removeEventListener('click', openLoginModal);
+            mobileAuthBtn.href = `${BASE_PATH}/${LANG}/profile.html`;
+            mobileAuthBtn.querySelector('span').textContent = userName;
+            mobileAuthBtn.removeEventListener('click', openLoginModal);
+        } else {
+            desktopAuthBtn.href = "#";
+            desktopAuthBtn.innerHTML = `<i class="far fa-user"></i> <span class="auth-text">${I18N.nav_signin}</span>`;
+            desktopAuthBtn.title = I18N.nav_signin;
+            desktopAuthBtn.addEventListener('click', openLoginModal);
+            mobileAuthBtn.href = "#";
+            mobileAuthBtn.querySelector('span').textContent = I18N.nav_signin_register;
+            mobileAuthBtn.addEventListener('click', openLoginModal);
+        }
+    }
+
+    async function syncCartOnAuth(user) {
+        const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+        if (localCart.length === 0) return;
+        const cartCollectionRef = collection(db, `users/${user.uid}/cart`);
+        const batch = writeBatch(db);
+        for (const localItem of localCart) {
+            const docRef = doc(cartCollectionRef, localItem.productId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const newQuantity = docSnap.data().quantity + localItem.quantity;
+                batch.update(docRef, { quantity: newQuantity });
+            } else {
+                batch.set(docRef, { quantity: localItem.quantity, addedAt: new Date() });
+            }
+        }
+        await batch.commit();
+        localStorage.removeItem(CART_STORAGE_KEY);
+    }
+
+    async function syncWishlistOnAuth(user) {
+        const localWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY)) || [];
+        if (localWishlist.length === 0) return;
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const firestoreWishlist = userDoc.exists() && userDoc.data().wishlist ? userDoc.data().wishlist : [];
+        const merged = [...new Set([...firestoreWishlist, ...localWishlist])];
+        await setDoc(userDocRef, { wishlist: merged }, { merge: true });
+        localStorage.removeItem(WISHLIST_STORAGE_KEY);
+    }
+
+    // ===============================================================
+    // =================== CART & WISHLIST LOGIC =====================
+    // ===============================================================
+
+    async function updateHeaderCounters() {
+        const user = auth.currentUser;
+        let cartItemCount = 0;
+        let wishlistItemCount = 0;
+
+        if (user) {
+            const cartSnapshot = await getDocs(collection(db, `users/${user.uid}/cart`));
+            cartSnapshot.forEach(doc => { cartItemCount += doc.data().quantity; });
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists() && userDoc.data().wishlist) {
+                wishlistItemCount = userDoc.data().wishlist.length;
+                wishlistProductIds = new Set(userDoc.data().wishlist);
+            }
+        } else {
+            const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+            localCart.forEach(item => { cartItemCount += item.quantity; });
+            const localWishlist = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY)) || [];
+            wishlistItemCount = localWishlist.length;
+            wishlistProductIds = new Set(localWishlist);
+        }
+
+        document.querySelectorAll('.cart-count, .cart-count-badge').forEach(el => {
+            el.textContent = cartItemCount;
+            el.style.display = cartItemCount > 0 ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.wishlist-count, .wishlist-count-badge').forEach(el => {
+            el.textContent = wishlistItemCount;
+            el.style.display = wishlistItemCount > 0 ? 'flex' : 'none';
+        });
+    }
+
+    async function addToCart(productId, buttonElement) {
+        const user = auth.currentUser;
+        if (user) {
+            const cartItemRef = doc(db, `users/${user.uid}/cart`, productId);
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const cartItemDoc = await transaction.get(cartItemRef);
+                    if (!cartItemDoc.exists()) {
+                        transaction.set(cartItemRef, { quantity: 1, addedAt: new Date() });
+                    } else {
+                        const newQuantity = cartItemDoc.data().quantity + 1;
+                        transaction.update(cartItemRef, { quantity: newQuantity });
+                    }
+                });
+            } catch (e) { console.error("Transaction failed: ", e); }
+        } else {
+            let cart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || [];
+            const existingItem = cart.find(item => item.productId === productId);
+            if (existingItem) { existingItem.quantity++; } else { cart.push({ productId, quantity: 1 }); }
+            localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+        }
+        showToast('Added to cart!', 'success');
+        await updateHeaderCounters();
+
+        if (buttonElement) {
+            const originalTextNode = buttonElement.querySelector('span');
+            const originalText = originalTextNode ? originalTextNode.textContent : 'Add to Cart';
+            
+            if (originalTextNode) originalTextNode.textContent = 'Added!';
+            buttonElement.classList.add('added');
+            buttonElement.disabled = true;
+            
+            setTimeout(() => {
+                if (originalTextNode) originalTextNode.textContent = originalText;
+                buttonElement.classList.remove('added');
+                buttonElement.disabled = false;
+            }, 2000);
+        }
+    }
+
+    // ===============================================================
+    // =================== PROFILE PAGE SCRIPT =======================
+    // ===============================================================
+
+    onAuthStateChanged(auth, async (user) => {
+        updateUIForAuthState(user);
+        if (user) {
+            await createUserProfileDocument(user);
+            await syncCartOnAuth(user);
+            await syncWishlistOnAuth(user);
+            initializeProfilePage(user);
+        } else {
+            alert("You must be signed in to view your account.");
+            window.location.href = `${BASE_PATH}/${LANG}/index.html`;
+        }
+        await updateHeaderCounters();
+    });
+
+    async function initializeProfilePage(user) {
+        const accountMenuLinks = document.querySelectorAll('.account-menu a[data-view]');
+        const accountViews = document.querySelectorAll('.account-view');
+        const signOutBtn = document.getElementById('sign-out-btn');
+
+        const userDisplayName = user.displayName || user.email.split('@')[0];
+        document.getElementById('user-display-name').textContent = userDisplayName;
+        document.getElementById('user-email').textContent = user.email;
+        document.getElementById('user-avatar').textContent = userDisplayName.charAt(0).toUpperCase();
+        document.getElementById('display-name-input').value = userDisplayName;
+
+        function switchView(viewName) {
+            if (!viewName) viewName = 'wishlist';
+            
+            accountMenuLinks.forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`.account-menu a[data-view="${viewName}"]`);
+            if (activeLink) activeLink.classList.add('active');
+            
+            accountViews.forEach(view => view.classList.remove('active'));
+            const activeView = document.getElementById(`account-view-${viewName}`);
+            if (activeView) activeView.classList.add('active');
+        }
+
+        window.addEventListener('hashchange', () => switchView(window.location.hash.substring(1)), false);
+        switchView(window.location.hash.substring(1));
+
+        signOutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to sign out?')) {
+                try {
+                    await signOut(auth);
+                    window.location.href = `${BASE_PATH}/${LANG}/index.html`;
+                } catch (error) { console.error("Sign out error:", error); }
+            }
+        });
+
+        document.getElementById('profile-settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('display-name-input').value.trim();
+            if (newName && newName !== (auth.currentUser.displayName || '')) {
+                try {
+                    await updateProfile(auth.currentUser, { displayName: newName });
+                    showToast("Your name has been updated!", 'success');
+                    document.getElementById('user-display-name').textContent = newName;
+                    document.getElementById('user-avatar').textContent = newName.charAt(0).toUpperCase();
+                    updateUIForAuthState(auth.currentUser);
+                } catch (error) {
+                    console.error("Error updating profile:", error);
+                    showToast("Could not update your name. Please try again.", 'danger');
+                }
+            }
+        });
+
+        const [addresses, wishlist] = await Promise.all([
+            fetchAddresses(user.uid),
+            fetchWishlist(user.uid)
+        ]);
+
+        userReviewsData = await fetchReviews(user.uid);
+
+        renderAddressesView(addresses, user.uid);
+        renderWishlistView(wishlist, user.uid);
+        renderReviewsView(userReviewsData);
+        setupReviewActions(user.uid);
+    }
+
+    // --- DATA FETCHING FUNCTIONS ---
+    async function fetchAddresses(userId) {
+        const addressesCol = collection(db, `users/${userId}/addresses`);
+        const snapshot = await getDocs(addressesCol);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+    
+    async function fetchWishlist(userId) {
+        const userDocRef = doc(db, "users", userId);
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists() || !userDoc.data().wishlist) return [];
+        const productIds = userDoc.data().wishlist;
+        if (productIds.length === 0) return [];
+        
+        const productPromises = [];
+        for (let i = 0; i < productIds.length; i += 10) {
+            const chunk = productIds.slice(i, i + 10);
+            const q = query(collection(db, "products"), where("__name__", "in", chunk));
+            productPromises.push(getDocs(q));
+        }
+        
+        const querySnapshots = await Promise.all(productPromises);
+        const products = [];
+        querySnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => products.push(flattenProduct(doc.id, doc.data(), LANG)));
+        });
+        return products;
+    }
+    
+    async function fetchReviews(userId) {
+        try {
+            const reviewsQuery = query(collectionGroup(db, 'reviews'), where("userId", "==", userId), orderBy("createdAt", "desc"));
+            const snapshot = await getDocs(reviewsQuery);
+            const reviewsWithProductData = await Promise.all(snapshot.docs.map(async (reviewDoc) => {
+                const reviewData = { id: reviewDoc.id, ...reviewDoc.data() };
+                const productRef = reviewDoc.ref.parent.parent;
+                if (productRef) {
+                    const productDoc = await getDoc(productRef);
+                    if (productDoc.exists()) {
+                        const productData = productDoc.data();
+                        reviewData.product = flattenProduct(productDoc.id, productData, LANG);
+                    }
+                }
+                return reviewData;
+            }));
+            return reviewsWithProductData;
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
+            return [];
+        }
+    }
+
+    // --- RENDER FUNCTIONS ---
+    function renderAddressesView(addresses, userId) {
+        renderAddresses(document.getElementById('addresses-list'), addresses, userId);
+        setupAddressModal(userId);
+    }
+
+    function renderWishlistView(wishlist, userId) {
+        renderWishlist(document.getElementById('wishlist-grid'), wishlist, userId);
+    }
+
+    function renderReviewsView(reviews) {
+        const container = document.getElementById('reviews-list-container');
+        if (!reviews || reviews.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-star"></i><p>${I18N.no_reviews}</p></div>`;
+            return;
+        }
+        let tableHTML = `<div class="reviews-table-wrapper"><table class="prepared-table"><thead><tr><th>${I18N.table_product}</th><th>${I18N.table_rating}</th><th>${I18N.table_review_title}</th><th>${I18N.table_comment}</th><th>${I18N.table_date}</th><th>${I18N.table_actions}</th></tr></thead><tbody>`;
+        reviews.forEach(review => {
+            const reviewDate = review.createdAt?.toDate ? review.createdAt.toDate().toLocaleDateString() : 'N/A';
+            let productUrl = '#';
+            if (review.product && review.product.slug && review.product.categorySlug) {
+                productUrl = `${BASE_PATH}/${LANG}/products/${review.product.categorySlug}/${review.product.slug}.html`;
+            }
+            const productName = review.productName || 'Unknown Product';
+            const stars = '★'.repeat(review.rating || 0) + '☆'.repeat(5 - (review.rating || 0));
+            const title = review.title || 'No title';
+            const comment = review.comment || review.text || 'No comment provided';
+            tableHTML += `<tr data-review-id="${review.id}"><td><a href="${productUrl}" class="product-link" target="_blank">${productName}</a></td><td><span class="review-rating">${stars}</span></td><td>${title}</td><td class="comment-cell">${comment}</td><td>${reviewDate}</td><td class="review-actions"><button class="btn-edit-review" title="Edit review" data-review-id="${review.id}" data-product-id="${review.product?.id || ''}"><i class="fas fa-pencil-alt"></i></button><button class="btn-delete-review" title="Delete review" data-review-id="${review.id}" data-product-id="${review.product?.id || ''}"><i class="fas fa-trash"></i></button></td></tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        container.innerHTML = tableHTML;
+    }
+
+    // --- DETAILED IMPLEMENTATIONS ---
+    function renderAddresses(container, addresses, userId) {
+        container.innerHTML = '';
+        if (addresses.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-map-marker-alt"></i><p>${I18N.no_addresses}</p></div>`;
+            return;
+        }
+        addresses.sort((a, b) => b.isDefault - a.isDefault);
+        addresses.forEach(address => {
+            const card = document.createElement('div');
+            card.className = `address-card ${address.isDefault ? 'default' : ''}`;
+            card.innerHTML = `${address.isDefault ? `<div class="address-default-badge">${I18N.default_badge}</div>` : ''}<div class="address-name">${address.addressName}</div><div class="address-details">${address.firstName} ${address.lastName}<br>${address.line1}<br>${address.line2 ? address.line2 + '<br>' : ''}${address.city}, ${address.state} ${address.zip}<br>${address.country}<br>${address.phone}</div><div class="address-actions"><button class="btn-edit" data-id="${address.id}">${I18N.edit}</button>${!address.isDefault ? `<button class="btn-set-default" data-id="${address.id}">${I18N.set_as_default}</button>` : ''}<button class="btn-delete" data-id="${address.id}">${I18N.delete}</button></div>`;
+            container.appendChild(card);
+        });
+        container.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', () => openAddressModal(userId, addresses.find(a => a.id === btn.dataset.id))));
+        container.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => deleteAddress(userId, btn.dataset.id)));
+        container.querySelectorAll('.btn-set-default').forEach(btn => btn.addEventListener('click', () => setDefaultAddress(userId, btn.dataset.id, addresses)));
+    }
+
+    async function deleteAddress(userId, addressId) {
+        if (confirm('Are you sure you want to delete this address?')) {
+            await deleteDoc(doc(db, `users/${userId}/addresses`, addressId));
+            refreshAddresses(userId);
+        }
+    }
+
+    async function setDefaultAddress(userId, newDefaultId, allAddresses) {
+        const batch = writeBatch(db);
+        allAddresses.forEach(address => {
+            const docRef = doc(db, `users/${userId}/addresses`, address.id);
+            const isNewDefault = address.id === newDefaultId;
+            if (address.isDefault !== isNewDefault) {
+                 batch.update(docRef, { isDefault: isNewDefault });
+            }
+        });
+        await batch.commit();
+        refreshAddresses(userId);
+    }
+
+    const addressModal = document.getElementById('address-modal');
+    const addressForm = document.getElementById('address-form');
+    const modalTitle = document.getElementById('address-modal-title');
+
+    function setupAddressModal(userId) {
+        document.getElementById('add-address-btn').addEventListener('click', () => openAddressModal(userId));
+        addressModal.querySelector('.close-modal').addEventListener('click', closeAddressModal);
+        addressModal.querySelector('.btn-cancel').addEventListener('click', closeAddressModal);
+        
+        addressForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const addressId = document.getElementById('address-id').value;
+            const addressData = {
+                addressName: document.getElementById('address-name').value,
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                line1: document.getElementById('address-line1').value,
+                line2: document.getElementById('address-line2').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                zip: document.getElementById('zip-code').value,
+                country: document.getElementById('country').value,
+                phone: document.getElementById('phone').value,
+                isDefault: document.getElementById('default-address').checked
+            };
+
+            if (addressData.isDefault) {
+                const addresses = await fetchAddresses(userId);
+                const batch = writeBatch(db);
+                addresses.forEach(addr => {
+                    if (addr.isDefault && addr.id !== addressId) {
+                        const docRef = doc(db, `users/${userId}/addresses`, addr.id);
+                        batch.update(docRef, { isDefault: false });
+                    }
+                });
+                await batch.commit();
+            }
+
+            if (addressId) {
+                await updateDoc(doc(db, `users/${userId}/addresses`, addressId), addressData);
+            } else {
+                await addDoc(collection(db, `users/${userId}/addresses`), addressData);
+            }
+            closeAddressModal();
+            refreshAddresses(userId);
+        });
+    }
+
+    function openAddressModal(userId, addressToEdit = null) {
+        addressForm.reset();
+        if (addressToEdit) {
+            modalTitle.textContent = 'Edit Address';
+            document.getElementById('address-id').value = addressToEdit.id;
+            document.getElementById('address-name').value = addressToEdit.addressName;
+            document.getElementById('first-name').value = addressToEdit.firstName;
+            document.getElementById('last-name').value = addressToEdit.lastName;
+            document.getElementById('address-line1').value = addressToEdit.line1;
+            document.getElementById('address-line2').value = addressToEdit.line2;
+            document.getElementById('city').value = addressToEdit.city;
+            document.getElementById('state').value = addressToEdit.state;
+            document.getElementById('zip-code').value = addressToEdit.zip;
+            document.getElementById('country').value = addressToEdit.country;
+            document.getElementById('phone').value = addressToEdit.phone;
+            document.getElementById('default-address').checked = addressToEdit.isDefault;
+        } else {
+            modalTitle.textContent = 'Add New Address';
+            document.getElementById('address-id').value = '';
+        }
+        addressModal.classList.add('active');
+    }
+
+    function closeAddressModal() { addressModal.classList.remove('active'); }
+    async function refreshAddresses(userId) { const addresses = await fetchAddresses(userId); renderAddresses(document.getElementById('addresses-list'), addresses, userId); }
+    
+    // --- REVIEW MANAGEMENT ---
+    const reviewModal = document.getElementById('review-modal');
+    const reviewForm = document.getElementById('review-form');
+
+    function setupReviewActions(userId) {
+        const container = document.getElementById('reviews-list-container');
+        container.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.btn-edit-review');
+            const deleteBtn = e.target.closest('.btn-delete-review');
+            if (editBtn) { const reviewId = editBtn.dataset.reviewId; const reviewData = userReviewsData.find(r => r.id === reviewId); if(reviewData) openReviewModal(reviewData); }
+            if (deleteBtn) { const reviewId = deleteBtn.dataset.reviewId; const productId = deleteBtn.dataset.productId; if (productId && reviewId) deleteReview(userId, productId, reviewId); }
+        });
+        reviewModal.querySelector('.close-modal').addEventListener('click', closeReviewModal);
+        reviewModal.querySelector('.btn-cancel').addEventListener('click', closeReviewModal);
+        reviewForm.addEventListener('submit', (e) => handleReviewUpdate(e, userId));
+    }
+
+    function openReviewModal(review) {
+        reviewForm.reset();
+        document.getElementById('review-id').value = review.id;
+        document.getElementById('review-product-id').value = review.product.id;
+        document.getElementById('review-title-input').value = review.title || '';
+        document.getElementById('review-comment-input').value = review.text || review.comment || '';
+        const ratingInput = reviewForm.querySelector(`input[name="rating"][value="${review.rating}"]`);
+        if(ratingInput) ratingInput.checked = true;
+        reviewModal.classList.add('active');
+    }
+
+    function closeReviewModal() { reviewModal.classList.remove('active'); }
+
+    async function handleReviewUpdate(e, userId) {
+        e.preventDefault();
+        const reviewId = document.getElementById('review-id').value;
+        const productId = document.getElementById('review-product-id').value;
+        const newRating = Number(reviewForm.querySelector('input[name="rating"]:checked').value);
+        const newTitle = document.getElementById('review-title-input').value;
+        const newText = document.getElementById('review-comment-input').value;
+        const productRef = doc(db, "products", productId);
+        const reviewRef = doc(db, `products/${productId}/reviews`, reviewId);
+        try {
+            await runTransaction(db, async (transaction) => {
+                const productDoc = await transaction.get(productRef);
+                const reviewDoc = await transaction.get(reviewRef);
+                if (!productDoc.exists() || !reviewDoc.exists()) throw "Product or Review does not exist!";
+                const g = productDoc.data().globalFields || {};
+                const oldRating = reviewDoc.data().rating;
+                const reviewCount = g.reviewCount || 1;
+                const newTotalRating = (g.rating || 0) * reviewCount - oldRating + newRating;
+                const newAverageRating = newTotalRating / reviewCount;
+                transaction.update(productRef, { 'globalFields.rating': parseFloat(newAverageRating.toFixed(2)) });
+                transaction.update(reviewRef, { rating: newRating, title: newTitle, text: newText, comment: newText });
+            });
+            showToast("Review updated successfully!", 'success');
+            closeReviewModal();
+            await refreshReviews(userId);
+        } catch (error) { console.error("Error updating review:", error); showToast("Failed to update review.", 'danger'); }
+    }
+
+    async function deleteReview(userId, productId, reviewId) {
+        if (!confirm('Are you sure you want to delete this review?')) return;
+        const productRef = doc(db, "products", productId);
+        const reviewRef = doc(db, `products/${productId}/reviews`, reviewId);
+        try {
+            await runTransaction(db, async (transaction) => {
+                const productDoc = await transaction.get(productRef);
+                const reviewDoc = await transaction.get(reviewRef);
+                if (!productDoc.exists() || !reviewDoc.exists()) throw "Product or Review does not exist!";
+                const g = productDoc.data().globalFields || {};
+                const deletedRating = reviewDoc.data().rating;
+                const oldReviewCount = g.reviewCount || 1;
+                const newReviewCount = oldReviewCount - 1;
+                let newAverageRating = 0;
+                if (newReviewCount > 0) {
+                    const newTotalRating = (g.rating || 0) * oldReviewCount - deletedRating;
+                    newAverageRating = newTotalRating / newReviewCount;
+                }
+                transaction.update(productRef, { 'globalFields.reviewCount': newReviewCount, 'globalFields.rating': parseFloat(newAverageRating.toFixed(2)) });
+                transaction.delete(reviewRef);
+            });
+            showToast("Review deleted successfully!", 'success');
+            await refreshReviews(userId);
+        } catch (error) { console.error("Error deleting review:", error); showToast("Failed to delete review.", 'danger'); }
+    }
+
+    async function refreshReviews(userId) { userReviewsData = await fetchReviews(userId); renderReviewsView(userReviewsData); }
+    
+    // --- WISHLIST ---
+    function renderWishlist(container, items, userId) {
+        container.innerHTML = '';
+        if (items.length === 0) {
+            container.innerHTML = `<div class="empty-state"><i class="fas fa-heart"></i><p>${I18N.no_wishlist_items}</p></div>`;
+            return;
+        }
+        items.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'wishlist-item';
+            const productUrl = `${BASE_PATH}/${LANG}/products/${item.categorySlug}/${item.slug}.html`;
+            card.innerHTML = `<a href="${productUrl}"><img src="${item.imageUrl}" alt="${item.name}" class="wishlist-item-img"></a><div class="wishlist-item-info"><a href="${productUrl}" style="text-decoration:none; color: inherit;"><div class="wishlist-item-name">${item.name}</div></a><div class="wishlist-item-meta">${categoryLabel(item.categoryId)}, ${item.country}</div><div class="wishlist-item-price">$${item.price.toFixed(2)}</div><div class="wishlist-item-actions"><button class="btn-add-to-cart" data-id="${item.id}"><i class="fas fa-shopping-cart"></i><span>${I18N.add_to_cart}</span></button><button class="btn-remove-wishlist" data-id="${item.id}"><i class="fas fa-trash"></i></button></div></div>`;
+            container.appendChild(card);
+        });
+
+        container.querySelectorAll('.btn-add-to-cart').forEach(btn => {
+            btn.addEventListener('click', (e) => addToCart(btn.dataset.id, e.currentTarget));
+        });
+        container.querySelectorAll('.btn-remove-wishlist').forEach(btn => {
+            btn.addEventListener('click', () => removeFromWishlist(userId, btn.dataset.id));
+        });
+    }
+    
+    async function removeFromWishlist(userId, productId) {
+        if (confirm('Are you sure you want to remove this item from your wishlist?')) {
+            const userDocRef = doc(db, "users", userId);
+            await updateDoc(userDocRef, { wishlist: arrayRemove(productId) });
+            refreshWishlist(userId);
+        }
+    }
+
+    async function refreshWishlist(userId) {
+        const wishlist = await fetchWishlist(userId);
+        renderWishlist(document.getElementById('wishlist-grid'), wishlist, userId);
+        updateHeaderCounters();
+    }
+
+    // ===============================================================
+    // =================== PAGE LOAD & ANIMATION =====================
+    // ===============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const loader = document.getElementById('loader');
+        const mainContent = document.getElementById('main-site-content');
+        
+        // Loader
+        setTimeout(() => {
+            loader.classList.add('hidden');
+            mainContent.classList.add('loaded');
+        }, 100);
+
+        // Animation on Scroll
+        const animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.animate-on-scroll').forEach(el => animationObserver.observe(el));
+
+        // Mobile Menu
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.getElementById('main-nav');
+        mobileMenuBtn.addEventListener('click', () => {
+            const isActive = navLinks.classList.toggle('active');
+            mobileMenuBtn.classList.toggle('active', isActive);
+            mobileMenuBtn.innerHTML = isActive ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+        });
+
+        // Search Modal
+        const desktopSearchBtn = document.querySelector('.search-btn.desktop-only');
+        const searchModal = document.getElementById('search-modal');
+        const closeSearchModalBtn = document.querySelector('.close-search-modal-btn');
+        const desktopSearchForm = document.getElementById('desktop-search-form');
+        const desktopSearchInput = document.getElementById('desktop-search-input');
+
+        if (desktopSearchBtn && searchModal) {
+            desktopSearchBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                searchModal.style.display = 'block';
+                desktopSearchInput.focus();
+            });
+            const closeSearchModal = () => { searchModal.style.display = 'none'; };
+            closeSearchModalBtn.addEventListener('click', closeSearchModal);
+            searchModal.addEventListener('click', (e) => { if (e.target === searchModal) closeSearchModal(); });
+            desktopSearchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = desktopSearchInput.value.trim();
+                if (query) { window.location.href = `${BASE_PATH}/${LANG}/catalog.html?search=${encodeURIComponent(query)}`; }
+            });
+        }
+        
+        // Mobile Search
+        const mobileSearchForm = document.querySelector('.mobile-search .search-box');
+        if (mobileSearchForm) {
+            const mobileSearchInput = mobileSearchForm.querySelector('input');
+            mobileSearchForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const query = mobileSearchInput.value.trim();
+                if (query) { window.location.href = `${BASE_PATH}/${LANG}/catalog.html?search=${encodeURIComponent(query)}`; }
+            });
+        }
+    });
+    </script>
+</body>
+</html>

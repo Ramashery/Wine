@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ product.name }} - VinoElite</title>
+    <meta name="description" content="{{ product.metaDescription or product.description }}">
+
+    {% for code in languages.keys() %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ site_url }}{{ alt_urls[code] }}">
+    {% endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ alt_urls['en'] }}">
+    <link rel="canonical" href="{{ site_url }}{{ page_url }}">
+
+    <meta property="og:title" content="{{ product.name }}" />
+    <meta property="og:type" content="product" />
+    <meta property="og:description" content="{{ product.metaDescription or product.description }}" />
+    {% if product.imageUrl %}<meta property="og:image" content="{{ product.imageUrl }}" />{% endif %}
+    <meta property="og:url" content="{{ site_url }}{{ page_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+    <meta property="og:locale" content="{{ og_locale }}" />
+    <meta property="product:price:amount" content="{{ product.price }}" />
+    <meta property="product:price:currency" content="USD" />
+
+    <script type="application/ld+json">{{ breadcrumb_json }}</script>
+    <script type="application/ld+json">{{ schema_json }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset_path }}css/style.css">
+</head>
+<body>
+    {% include "partials/header.html" %}
+
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="{{ url_for('index', lang) }}">{{ t.breadcrumb_home }}</a> /
+            <a href="{{ url_for('catalog', lang) }}">{{ t.breadcrumb_catalog }}</a> /
+            <a href="{{ url_for_category(product.categorySlug, lang) }}">{{ product.categoryLabel }}</a> /
+            <span>{{ product.name }}</span>
+        </div>
+    </div>
+
+    <section class="product-section">
+        <div class="container">
+            <div class="product-container animate-on-scroll">
+                <div class="product-gallery">
+                    <div class="product-gallery-main">
+                        {% for img in product.imageUrls %}
+                        <img src="{{ img }}" alt="{{ product.name }} — photo {{ loop.index }}" class="gallery-image{% if loop.first %} active{% endif %}" loading="{{ 'eager' if loop.first else 'lazy' }}" data-index="{{ loop.index0 }}">
+                        {% endfor %}
+                    </div>
+                    {% if product.imageUrls|length > 1 %}
+                    <div class="product-thumbnails">
+                        {% for img in product.imageUrls %}
+                        <img src="{{ img }}" alt="{{ product.name }} thumbnail {{ loop.index }}" class="thumbnail{% if loop.first %} active{% endif %}" data-index="{{ loop.index0 }}" loading="lazy">
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-info">
+                    <h1 class="product-title">{{ product.name }}</h1>
+                    <div class="product-subtitle">{{ [product.categoryLabel, product.sweetness] | select | join(' ') }}{% if product.region or product.country %} {{ 'from' if lang == 'en' else '' }} {{ [product.region, product.country] | select | join(', ') }}{% endif %}</div>
+                    {% if product.rating %}
+                    <div class="product-rating">
+                        {% for i in range(5) %}<i class="{{ 'fas' if i < product.rating|round(0, 'floor') else 'far' }} fa-star"></i>{% endfor %}
+                        <span>({{ product.reviewCount }})</span>
+                    </div>
+                    {% endif %}
+                    <p class="product-description">{{ product.description }}</p>
+
+                    <div class="product-details" id="product-details-list">
+                        {% for key, label, value in [
+                            ('country', t.detail_country, product.country),
+                            ('region', t.detail_region, product.region),
+                            ('appellation', t.detail_appellation, product.appellation),
+                            ('brand', t.detail_producer, product.brand),
+                            ('year', t.detail_year, product.year),
+                            ('grapeVarieties', t.detail_grapes, (product.grapeVarieties | join(', ')) if product.grapeVarieties else ''),
+                            ('sweetness', t.detail_sweetness, product.sweetness),
+                            ('alcohol', t.detail_alcohol, (product.alcohol ~ '%') if product.alcohol else ''),
+                            ('volume', t.detail_volume, product.volume),
+                        ] %}
+                        {% if value %}
+                        <div class="detail-item"><span class="detail-label">{{ label }}</span><span class="detail-value">{{ value }}</span></div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="pricing">
+                        <div class="price">${{ "%.2f"|format(product.price or 0) }}</div>
+                        {% if product.oldPrice %}<div class="old-price">${{ "%.2f"|format(product.oldPrice) }}</div>{% endif %}
+                    </div>
+
+                    <div class="stock-status {{ 'out-of-stock' if product.stock == 0 else ('low-stock' if product.stock <= 5 else 'in-stock') }}">
+                        {{ t.out_of_stock_status if product.stock == 0 else (t.low_stock if product.stock <= 5 else t.in_stock) }}
+                    </div>
+
+                    <div class="purchase-options">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus" aria-label="{{ t.decrease_qty }}">-</button>
+                            <input type="text" class="quantity-input" value="1" readonly aria-label="{{ t.quantity }}">
+                            <button class="quantity-btn plus" aria-label="{{ t.increase_qty }}">+</button>
+                        </div>
+                        <button class="add-to-cart-btn" id="add-to-cart-btn" data-product-id="{{ product.id }}" {% if product.stock == 0 %}disabled{% endif %}>
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>{{ t.out_of_stock_status if product.stock == 0 else t.add_to_cart }}</span>
+                            <span class="cart-quantity-badge"></span>
+                        </button>
+                        <button class="wishlist-toggle-btn large" data-product-id="{{ product.id }}" aria-label="{{ t.add_to_wishlist }}"><i class="far fa-heart"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="tabs-section animate-on-scroll">
+        <div class="container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="tasting-notes">{{ t.tab_tasting_notes }}</button>
+                <button class="tab-btn" data-tab="food-pairing">{{ t.tab_food_pairing }}</button>
+                <button class="tab-btn" data-tab="reviews">{{ t.tab_reviews }}</button>
+            </div>
+            <div class="tab-content active" id="tasting-notes-tab">
+                <h3>{{ t.tab_tasting_notes }}</h3>
+                {% if product.tastingNotes %}
+                <ul class="tasting-notes-list">
+                    {% for line in product.tastingNotes.split('\n') if line.strip() %}
+                    {% set parts = line.split(':', 1) %}
+                    <li>{% if parts|length == 2 %}<strong>{{ parts[0] }}:</strong> {{ parts[1].strip() }}{% else %}{{ line }}{% endif %}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}<p>{{ t.no_tasting_notes }}</p>{% endif %}
+            </div>
+            <div class="tab-content" id="food-pairing-tab">
+                <h3>{{ t.tab_food_pairing }}</h3>
+                {% if product.foodPairing %}<p class="food-pairing-content">{{ product.foodPairing | replace('\n', '<br>') }}</p>
+                {% else %}<p>{{ t.no_food_pairing }}</p>{% endif %}
+            </div>
+            <div class="tab-content" id="reviews-tab">
+                <h3>{{ t.customer_reviews }}</h3>
+                <div id="reviews-list"><p>{{ t.loading_reviews }}</p></div>
+                <div id="review-form-container"></div>
+            </div>
+        </div>
+    </section>
+
+    {% if related_products %}
+    <section class="related-section animate-on-scroll">
+        <div class="container">
+            <h2 class="section-title">{{ t.you_might_also_like }}</h2>
+            <div class="products-grid" id="related-products-grid">
+                {% from "partials/product_card.html" import product_card %}
+                {% for p in related_products %}
+                {{ product_card(p, lang, t) }}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {% include "partials/footer.html" %}
+    {% include "partials/modals.html" %}
+
+    <script type="module">
+        import { db, auth } from "{{ asset_path }}js/firebase-config.js";
+        import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc, setDoc, updateDoc, addDoc, arrayUnion, arrayRemove, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import { initSharedUI } from "{{ asset_path }}js/site.js";
+
+        const LANG = "{{ lang }}";
+        const BASE_PATH = "{{ base_path }}";
+        const I18N = {{ i18n_js }};
+        const PRODUCT_ID = "{{ product.id }}";
+
+        const shared = initSharedUI({ db, auth, LANG, I18N, BASE_PATH, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+            signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+            doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, query, where: undefined });
+
+        // ---- gallery ----
+        const mainImages = document.querySelectorAll('.gallery-image');
+        document.querySelectorAll('.thumbnail').forEach(thumb => {
+            thumb.addEventListener('click', () => {
+                const i = thumb.dataset.index;
+                mainImages.forEach(img => img.classList.toggle('active', img.dataset.index === i));
+                document.querySelectorAll('.thumbnail').forEach(t => t.classList.toggle('active', t === thumb));
+            });
+        });
+
+        // ---- quantity + add to cart ----
+        const qtyInput = document.querySelector('.quantity-input');
+        document.querySelector('.quantity-btn.minus')?.addEventListener('click', () => {
+            qtyInput.value = Math.max(1, parseInt(qtyInput.value) - 1);
+        });
+        document.querySelector('.quantity-btn.plus')?.addEventListener('click', () => {
+            qtyInput.value = parseInt(qtyInput.value) + 1;
+        });
+        document.getElementById('add-to-cart-btn')?.addEventListener('click', async () => {
+            const qty = parseInt(qtyInput.value) || 1;
+            for (let i = 0; i < qty; i++) { await shared.addToCart(PRODUCT_ID); }
+        });
+
+        // ---- tabs ----
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // ---- reviews (loaded client-side: can change any time, no need to rebuild the page) ----
+        async function loadReviews() {
+            const listEl = document.getElementById('reviews-list');
+            try {
+                const snap = await getDocs(query(collection(db, "products", PRODUCT_ID, "reviews"), orderBy("createdAt", "desc")));
+                if (snap.empty) { listEl.innerHTML = `<p>${I18N.no_reviews}</p>`; return; }
+                listEl.innerHTML = snap.docs.map(d => {
+                    const r = d.data();
+                    const stars = Array.from({length: 5}, (_, i) => `<i class="${i < (r.rating||0) ? 'fas' : 'far'} fa-star"></i>`).join('');
+                    return `<div class="review-item"><div class="review-stars">${stars}</div><h4>${r.title || ''}</h4><p>${r.comment || ''}</p><span class="review-author">${r.authorName || ''}</span></div>`;
+                }).join('');
+            } catch (err) {
+                listEl.innerHTML = `<p>${I18N.no_reviews}</p>`;
+            }
+        }
+        loadReviews();
+
+        // scroll-in animation + related-card slideshows
+        const animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); animationObserver.unobserve(entry.target); } });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.animate-on-scroll').forEach(el => animationObserver.observe(el));
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Preconnect to external services for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>{{ t.meta_title_cart }}</title>
+    <meta name="description" content="{{ t.meta_title_cart }}">
+    <!-- hreflang alternates for multilingual SEO -->
+    {% for code in languages.keys() %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ site_url }}{{ alt_urls[code] }}">
+    {% endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ alt_urls['en'] }}">
+    <link rel="canonical" href="{{ site_url }}{{ page_url }}">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset_path }}css/style.css">
+</head>
+<body>
+    {% include "partials/header.html" %}
+
+    <section class="breadcrumb-section">
+        <div class="container">
+            <div class="breadcrumb">
+                <a href="{{ url_for('index', lang) }}">{{ t.breadcrumb_home }}</a> / <a href="{{ url_for('profile', lang) }}">{{ t.my_account }}</a> / <span>{{ t.shopping_cart }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="cart-section">
+        <div class="container">
+            <div class="cart-container">
+                <div class="cart-items">
+                    <div class="cart-header">
+                        <h2 class="cart-title">{{ t.shopping_cart }}</h2>
+                        <div class="cart-count" id="cart-items-count">0 {{ t.items_plural }}</div>
+                    </div>
+                    
+                    <div id="cart-items-container">
+                        <!-- Cart items will be dynamically inserted here -->
+                    </div>
+                </div>
+                
+                <div class="cart-summary">
+                    <h3 class="summary-title">{{ t.order_summary }}</h3>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">{{ t.subtotal }}</span>
+                        <span class="summary-value" id="summary-subtotal">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">{{ t.shipping }}</span>
+                        <span class="summary-value" id="summary-shipping">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span class="summary-label">{{ t.tax_est }}</span>
+                        <span class="summary-value" id="summary-tax">$0.00</span>
+                    </div>
+                    
+                    <div class="summary-row summary-total">
+                        <span class="summary-label">{{ t.total }}</span>
+                        <span class="summary-value" id="summary-total">$0.00</span>
+                    </div>
+                    
+                    <div class="shipping-notice">
+                        <i class="fas fa-shipping-fast"></i>
+                        <span>{{ t.free_shipping_notice }}</span>
+                    </div>
+                    
+                    <button class="btn-checkout" id="checkout-btn" disabled>
+                        <i class="fas fa-lock"></i>
+                        <span>{{ t.proceed_to_checkout }}</span>
+                    </button>
+                    
+                    <div class="secure-checkout">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>{{ t.secure_checkout }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    {% include "partials/footer.html" %}
+
+    {% include "partials/modals.html" %}
+
+    <script type="module">
+    import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, writeBatch, arrayUnion } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    import { db, auth } from "{{ asset_path }}js/firebase-config.js";
+    import { flattenProduct, makeCategoryLabel } from "{{ asset_path }}js/site.js";
+
+    // --- i18n (generated from /locales/{lang}.json by generate_site.py) ---
+    const LANG = "{{ lang }}";
+        const BASE_PATH = "{{ base_path }}";
+    const I18N = {{ i18n_js }};
+    const CATEGORY_LABELS = {{ category_labels_js }};
+    const categoryLabel = makeCategoryLabel(CATEGORY_LABELS, LANG);
+
+    const CART_STORAGE_KEY = 'vinoelite_cart';
+    let cartItems = [];
+    let wishlistProductIds = new Set();
+    let debounceTimer;
+
+    function generateSlug(text) {
+        if (!text) return '';
+        return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '');
+    }
+
+    function showLoader() { document.getElementById('cart-items-container').innerHTML = `<div class="loader-container"><div class="loader"></div></div>`; }
+    function showToast(message, type = 'info') { const container = document.getElementById('toast-container'); const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); toast.addEventListener('transitionend', () => toast.remove()); }, 3000); }
+
+    function updateHeaderCounters() {
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        document.querySelectorAll('.cart-count, .cart-count-badge').forEach(el => { el.textContent = totalItems; el.style.display = totalItems > 0 ? 'flex' : 'none'; });
+        document.querySelectorAll('.wishlist-count, .wishlist-count-badge').forEach(el => { el.textContent = wishlistProductIds.size; el.style.display = wishlistProductIds.size > 0 ? 'flex' : 'none'; });
+    }
+
+    // --- AUTH MODAL LOGIC ---
+    const loginModal = document.getElementById('login-modal');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
+    const authForm = document.getElementById('auth-form');
+    const emailInput = document.getElementById('auth-email');
+    const passwordInput = document.getElementById('auth-password');
+    const errorContainer = document.getElementById('auth-error');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+    function openLoginModal(e) { e.preventDefault(); loginModal.style.display = 'block'; }
+    function closeLoginModal() { loginModal.style.display = 'none'; authForm.reset(); errorContainer.textContent = ''; }
+    
+    document.getElementById('google-signin-btn').addEventListener('click', async () => { try { await signInWithPopup(auth, new GoogleAuthProvider()); closeLoginModal(); } catch (error) { errorContainer.textContent = error.message; } });
+    authForm.addEventListener('submit', async (e) => { e.preventDefault(); const email = emailInput.value; const password = passwordInput.value; errorContainer.textContent = ''; try { await signInWithEmailAndPassword(auth, email, password); closeLoginModal(); } catch (error) { if (error.code === 'auth/user-not-found') { try { await createUserWithEmailAndPassword(auth, email, password); closeLoginModal(); } catch (createError) { errorContainer.textContent = createError.message; } } else { errorContainer.textContent = error.message; } } });
+    forgotPasswordLink.addEventListener('click', async (e) => { e.preventDefault(); const email = emailInput.value; if (!email) { alert('Please enter your email in the email field to reset the password.'); return; } try { await sendPasswordResetEmail(auth, email); alert('Password reset email sent! Please check your inbox.'); } catch (error) { alert(`Error: ${error.message}`); } });
+    closeModalBtn.addEventListener('click', closeLoginModal);
+    window.addEventListener('click', (e) => { if (e.target == loginModal) closeLoginModal(); });
+
+    // --- SEARCH MODAL LOGIC ---
+    const desktopSearchBtn = document.querySelector('.search-btn.desktop-only');
+    const searchModal = document.getElementById('search-modal');
+    const closeSearchModalBtn = document.querySelector('.close-search-modal-btn');
+    const desktopSearchForm = document.getElementById('desktop-search-form');
+    const desktopSearchInput = document.getElementById('desktop-search-input');
+
+    if (desktopSearchBtn && searchModal) {
+        desktopSearchBtn.addEventListener('click', (e) => { e.preventDefault(); searchModal.style.display = 'block'; desktopSearchInput.focus(); });
+        const closeSearchModal = () => { searchModal.style.display = 'none'; };
+        closeSearchModalBtn.addEventListener('click', closeSearchModal);
+        searchModal.addEventListener('click', (e) => { if (e.target === searchModal) closeSearchModal(); });
+        desktopSearchForm.addEventListener('submit', (e) => { e.preventDefault(); const query = desktopSearchInput.value.trim(); if (query) { window.location.href = `${BASE_PATH}/${LANG}/catalog.html?search=${encodeURIComponent(query)}`; } });
+    }
+
+    function updateUIForAuthState(user) {
+        const desktopAuthBtn = document.getElementById('auth-button');
+        const mobileAuthBtn = document.getElementById('mobile-auth-button');
+        if (user) {
+            const userName = user.displayName || user.email.split('@')[0];
+            desktopAuthBtn.href = `${BASE_PATH}/${LANG}/profile.html`;
+            desktopAuthBtn.innerHTML = `<i class="fas fa-user-check"></i> <span class="auth-text">${userName}</span>`;
+            desktopAuthBtn.title = "My Account";
+            desktopAuthBtn.removeEventListener('click', openLoginModal);
+            mobileAuthBtn.href = `${BASE_PATH}/${LANG}/profile.html`;
+            mobileAuthBtn.querySelector('span').textContent = userName;
+            mobileAuthBtn.removeEventListener('click', openLoginModal);
+        } else {
+            desktopAuthBtn.href = "#";
+            desktopAuthBtn.innerHTML = `<i class="far fa-user"></i> <span class="auth-text">${I18N.nav_signin}</span>`;
+            desktopAuthBtn.title = I18N.nav_signin;
+            desktopAuthBtn.addEventListener('click', openLoginModal);
+            mobileAuthBtn.href = "#";
+            mobileAuthBtn.querySelector('span').textContent = I18N.nav_signin_register;
+            mobileAuthBtn.addEventListener('click', openLoginModal);
+        }
+    }
+
+    async function getCartItems(user) { if (user) { const cartSnapshot = await getDocs(collection(db, `users/${user.uid}/cart`)); return cartSnapshot.docs.map(doc => ({ productId: doc.id, quantity: doc.data().quantity, addedAt: doc.data().addedAt })); } else { return JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || []; } }
+    function debouncedSaveCart() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { saveCartItems(auth.currentUser, cartItems); }, 1000); }
+    async function saveCartItems(user, items) { if (user) { const batch = writeBatch(db); const cartCollectionRef = collection(db, `users/${user.uid}/cart`); const currentCartSnapshot = await getDocs(cartCollectionRef); const firestoreProductIds = new Set(currentCartSnapshot.docs.map(d => d.id)); const localProductIds = new Set(items.map(i => i.productId)); firestoreProductIds.forEach(id => { if (!localProductIds.has(id)) { batch.delete(doc(cartCollectionRef, id)); } }); items.forEach(item => { const itemRef = doc(cartCollectionRef, item.productId); batch.set(itemRef, { quantity: item.quantity, addedAt: item.addedAt || new Date() }); }); await batch.commit(); } else { localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items)); } }
+    async function syncCartOnAuth(user) { const localCart = JSON.parse(localStorage.getItem(CART_STORAGE_KEY)) || []; if (localCart.length === 0) { return await getCartItems(user); } const firestoreCart = await getCartItems(user); const mergedCart = [...firestoreCart]; const firestoreProductIds = new Set(firestoreCart.map(item => item.productId)); localCart.forEach(localItem => { if (!firestoreProductIds.has(localItem.productId)) { mergedCart.push(localItem); } }); await saveCartItems(user, mergedCart); localStorage.removeItem(CART_STORAGE_KEY); return mergedCart; }
+    async function getProductDetails(productId) { try { const productDoc = await getDoc(doc(db, "products", productId)); return productDoc.exists() ? flattenProduct(productDoc.id, productDoc.data(), LANG) : null; } catch (error) { console.error("Error fetching product:", error); return null; } }
+    async function fetchWishlistIds(user) { if (!user) return new Set(); const userDoc = await getDoc(doc(db, "users", user.uid)); if (userDoc.exists() && userDoc.data().wishlist) { return new Set(userDoc.data().wishlist); } return new Set(); }
+
+    function updateSummary(subtotal) { const shippingCost = subtotal > 200 || subtotal === 0 ? 0 : 15.00; const tax = subtotal * 0.08; const total = subtotal + shippingCost + tax; document.getElementById('summary-subtotal').textContent = `$${subtotal.toFixed(2)}`; document.getElementById('summary-shipping').textContent = shippingCost === 0 ? 'Free' : `$${shippingCost.toFixed(2)}`; document.getElementById('summary-tax').textContent = `$${tax.toFixed(2)}`; document.getElementById('summary-total').textContent = `$${total.toFixed(2)}`; }
+    function renderEmptyCart() { document.getElementById('cart-items-container').innerHTML = `<div class="empty-cart"><i class="fas fa-shopping-cart"></i><h3>${I18N.empty_cart_title}</h3><p>${I18N.add_wines_hint}</p><a href="{{ url_for('catalog', lang) }}" class="btn-continue-shopping"><i class="fas fa-wine-bottle"></i><span>${I18N.continue_shopping}</span></a></div>`; document.getElementById('cart-items-count').textContent = `0 ${I18N.items_plural}`; document.getElementById('checkout-btn').disabled = true; updateSummary(0); }
+
+    async function renderCartItems() {
+        if (cartItems.length === 0) { renderEmptyCart(); updateHeaderCounters(); return; }
+        const productPromises = cartItems.map(item => getProductDetails(item.productId));
+        const products = await Promise.all(productPromises);
+        const validItems = cartItems.filter((item, index) => products[index] !== null);
+        const validProducts = products.filter(product => product !== null);
+        if (validItems.length !== cartItems.length) { cartItems = validItems; debouncedSaveCart(); }
+        if (cartItems.length === 0) { renderEmptyCart(); updateHeaderCounters(); return; }
+
+        let itemsHTML = '';
+        let subtotal = 0;
+        
+        validItems.forEach((item, index) => {
+            const product = validProducts[index];
+            const productUrl = `${BASE_PATH}/${LANG}/products/${product.categorySlug}/${product.slug}.html`;
+            const itemTotal = product.price * item.quantity;
+            subtotal += itemTotal;
+            const imageUrl = product.imageUrl || (product.imageUrls && product.imageUrls[0]) || '/images/placeholder-wine.jpg';
+            const localizedName = product.name;
+            
+            // Truncate logic for mobile
+            const productName = localizedName.length > 50 ? localizedName.substring(0, 47) + '...' : localizedName;
+            const metaInfo = `${categoryLabel(product.categoryId)} • ${product.country} • ${product.volume || ''}`;
+            const truncatedMeta = metaInfo.length > 60 ? metaInfo.substring(0, 57) + '...' : metaInfo;
+            
+            itemsHTML += `
+                <div class="cart-item" data-product-id="${item.productId}">
+                    <a href="${productUrl}" class="item-image-link">
+                        <img src="${imageUrl}" alt="${localizedName}" loading="lazy">
+                    </a>
+                    <div class="item-details">
+                        <div>
+                            <h3 class="item-name">
+                                <a href="${productUrl}" class="item-name-link" title="${localizedName}">${productName}</a>
+                            </h3>
+                            <div class="item-meta" title="${metaInfo}">${truncatedMeta}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="btn-remove" data-product-id="${item.productId}">
+                                <i class="fas fa-trash"></i>
+                                <span class="action-text">${I18N.remove}</span>
+                            </button>
+                            <button class="btn-move-to-wishlist" data-product-id="${item.productId}">
+                                <i class="fas fa-heart"></i>
+                                <span class="action-text">${I18N.move_to_wishlist}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="item-controls">
+                        <div class="item-price">$${itemTotal.toFixed(2)}</div>
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus" data-product-id="${item.productId}" aria-label="${I18N.decrease_qty}">-</button>
+                            <input type="text" class="quantity-input" value="${item.quantity}" readonly aria-label="${I18N.quantity}">
+                            <button class="quantity-btn plus" data-product-id="${item.productId}" aria-label="${I18N.increase_qty}">+</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        document.getElementById('cart-items-container').innerHTML = itemsHTML;
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        document.getElementById('cart-items-count').textContent = `${totalItems} ${totalItems === 1 ? I18N.item_singular : I18N.items_plural}`;
+        document.getElementById('checkout-btn').disabled = false;
+        updateSummary(subtotal);
+        updateHeaderCounters();
+        setupCartEventListeners();
+    }
+
+    async function updateCartItemQuantity(productId, newQuantity) { if (newQuantity < 1) { await removeCartItem(productId); return; } const itemIndex = cartItems.findIndex(item => item.productId === productId); if (itemIndex !== -1) { cartItems[itemIndex].quantity = newQuantity; await renderCartItems(); debouncedSaveCart(); } }
+    async function removeCartItem(productId) { cartItems = cartItems.filter(item => item.productId !== productId); showToast('Item removed from cart.', 'danger'); await renderCartItems(); debouncedSaveCart(); }
+    async function moveToWishlist(productId) { const user = auth.currentUser; if (!user) { showToast('Please sign in to use the wishlist.', 'info'); return; } try { if (wishlistProductIds.has(productId)) { showToast('Item is already in your wishlist.', 'info'); } else { const userDocRef = doc(db, "users", user.uid); await updateDoc(userDocRef, { wishlist: arrayUnion(productId) }); wishlistProductIds.add(productId); showToast('Item moved to wishlist!', 'success'); } await removeCartItem(productId); } catch (error) { console.error("Error moving to wishlist:", error); showToast('Could not move item to wishlist.', 'danger'); } }
+
+    function setupCartEventListeners() {
+        document.querySelectorAll('.quantity-btn.minus').forEach(btn => btn.addEventListener('click', () => { const productId = btn.dataset.productId; const item = cartItems.find(i => i.productId === productId); if (item) updateCartItemQuantity(productId, item.quantity - 1); }));
+        document.querySelectorAll('.quantity-btn.plus').forEach(btn => btn.addEventListener('click', () => { const productId = btn.dataset.productId; const item = cartItems.find(i => i.productId === productId); if (item) updateCartItemQuantity(productId, item.quantity + 1); }));
+        document.querySelectorAll('.btn-remove').forEach(btn => btn.addEventListener('click', () => removeCartItem(btn.dataset.productId)));
+        document.querySelectorAll('.btn-move-to-wishlist').forEach(btn => btn.addEventListener('click', () => moveToWishlist(btn.dataset.productId)));
+        document.getElementById('checkout-btn').addEventListener('click', () => { if (cartItems.length > 0) { if (auth.currentUser) { alert('Proceeding to checkout... (Checkout functionality to be implemented)'); } else { showToast('Please sign in to proceed to checkout.', 'info'); } } });
+    }
+
+    function setupMobileMenu() {
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.getElementById('main-nav');
+        
+        if (mobileMenuBtn && navLinks) {
+            mobileMenuBtn.addEventListener('click', () => {
+                const isActive = navLinks.classList.toggle('active');
+                mobileMenuBtn.classList.toggle('active', isActive);
+                mobileMenuBtn.innerHTML = isActive ? '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            });
+
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    if (navLinks.classList.contains('active')) {
+                        if (link.closest('.mobile-actions')) return;
+                        e.preventDefault();
+                        navLinks.style.transform = 'translateX(-100%)';
+                        mobileMenuBtn.classList.remove('active');
+                        mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                        setTimeout(() => {
+                            navLinks.classList.remove('active');
+                            navLinks.style.transform = '';
+                            window.location.href = link.href;
+                        }, 400);
+                    }
+                });
+            });
+        }
+    }
+
+    function initBreadcrumbSticky() {
+        let lastScrollTop = 0;
+        const breadcrumbSection = document.querySelector('.breadcrumb-section');
+        if (!breadcrumbSection) return;
+        
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            if (scrollTop > lastScrollTop && scrollTop > 200) { breadcrumbSection.classList.add('scrolled-up'); } 
+            else if (scrollTop < lastScrollTop && scrollTop > 200) { breadcrumbSection.classList.add('scrolled-up'); } 
+            else { breadcrumbSection.classList.remove('scrolled-up'); }
+            lastScrollTop = scrollTop;
+        });
+    }
+
+    async function initializeCartPage() {
+        setupMobileMenu();
+        initBreadcrumbSticky();
+        showLoader();
+        onAuthStateChanged(auth, async (user) => {
+            updateUIForAuthState(user);
+            if (user) {
+                wishlistProductIds = await fetchWishlistIds(user);
+                cartItems = await syncCartOnAuth(user);
+            } else {
+                wishlistProductIds.clear();
+                cartItems = await getCartItems(null);
+            }
+            await renderCartItems();
+        });
+    }
+
+    initializeCartPage();
+    </script>
+</body>
+</html>```

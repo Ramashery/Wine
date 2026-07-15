@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+
+    <title>{{ t.meta_title_index }}</title>
+    <meta name="description" content="{{ t.meta_description_index }}">
+
+    {% for code in languages.keys() %}
+    <link rel="alternate" hreflang="{{ code }}" href="{{ site_url }}{{ alt_urls[code] }}">
+    {% endfor %}
+    <link rel="alternate" hreflang="x-default" href="{{ site_url }}{{ alt_urls['en'] }}">
+    <link rel="canonical" href="{{ site_url }}{{ page_url }}">
+
+    <meta property="og:title" content="{{ t.meta_title_index }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="{{ t.meta_description_index }}" />
+    {% if hero.heroBgImage %}<meta property="og:image" content="{{ hero.heroBgImage }}" />{% endif %}
+    <meta property="og:url" content="{{ site_url }}{{ page_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+    <meta property="og:locale" content="{{ og_locale }}" />
+
+    <script type="application/ld+json">{{ schema_json }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ asset_path }}css/style.css">
+</head>
+<body>
+    {% include "partials/header.html" %}
+
+    <section class="hero" id="hero-section" {% if hero.heroBgImage %}style="--hero-bg: url('{{ hero.heroBgImage }}');"{% endif %}>
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-subtitle animate-on-scroll">{{ hero.heroSubtitle or t.hero_subtitle }}</div>
+                <h1 class="hero-title animate-on-scroll">{{ hero.heroTitle or t.hero_title }}</h1>
+                <p class="hero-description animate-on-scroll">{{ hero.heroDescription or t.hero_description }}</p>
+                <a href="{{ url_for('catalog', lang) }}" class="btn-primary animate-on-scroll"><i class="fas fa-wine-bottle"></i> {{ t.hero_cta }}</a>
+            </div>
+        </div>
+    </section>
+
+    {% if categories %}
+    <section class="section" id="categories-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-subtitle">{{ t.categories_subtitle }}</div>
+                <h2 class="section-title">{{ t.categories_title }}</h2>
+            </div>
+            <div class="categories-grid">
+                {% for cat in categories %}
+                <a href="{{ url_for_category(cat.slug, lang) }}" class="category-card animate-on-scroll">
+                    {% if cat.image %}<img src="{{ cat.image }}" alt="{{ cat.name }}" loading="lazy">{% endif %}
+                    <h3>{{ cat.name }}</h3>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {% if featured_products %}
+    <section class="section" id="featured-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-subtitle">{{ t.featured_subtitle }}</div>
+                <h2 class="section-title">{{ t.featured_title }}</h2>
+            </div>
+            <div class="products-grid" id="featured-products-grid">
+                {% from "partials/product_card.html" import product_card %}
+                {% for p in featured_products %}
+                {{ product_card(p, lang, t, eager=(loop.index0 < 4)) }}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    {% include "partials/footer.html" %}
+    {% include "partials/modals.html" %}
+
+    <script type="module">
+        import { db, auth } from "{{ asset_path }}js/firebase-config.js";
+        import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        const LANG = "{{ lang }}";
+        const BASE_PATH = "{{ base_path }}";
+        const I18N = {{ i18n_js }};
+        const CATEGORY_LABELS = {{ category_labels_js }};
+
+        // ---- shared header/cart/wishlist/auth hydration (assets/js/site.js) ----
+        import { initSharedUI } from "{{ asset_path }}js/site.js";
+        initSharedUI({ db, auth, LANG, I18N, BASE_PATH, onAuthStateChanged, GoogleAuthProvider, signInWithPopup,
+            signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+            doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, collection, getDocs, query, where });
+
+        // scroll-in animation
+        const animationObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => { if (entry.isIntersecting) { entry.target.classList.add('is-visible'); animationObserver.unobserve(entry.target); } });
+        }, { threshold: 0.1 });
+        document.querySelectorAll('.animate-on-scroll').forEach(el => animationObserver.observe(el));
+
+        // slideshows on server-rendered product cards
+        document.querySelectorAll('.slideshow-container').forEach(setupSlideshow);
+        function setupSlideshow(container) {
+            const slides = container.querySelectorAll('.slideshow-item');
+            if (slides.length <= 1) return;
+            let index = 0;
+            container.addEventListener('mouseenter', () => {
+                container._interval = setInterval(() => {
+                    slides[index].classList.remove('active');
+                    index = (index + 1) % slides.length;
+                    slides[index].classList.add('active');
+                }, 1200);
+            });
+            container.addEventListener('mouseleave', () => {
+                clearInterval(container._interval);
+                slides.forEach((s, i) => s.classList.toggle('active', i === 0));
+                index = 0;
+            });
+        }
+    </script>
+</body>
+</html>
