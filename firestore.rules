@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Public read-only catalog data. Only admins write (via admin.html).
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      }
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /siteContent/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Users can only read/write their own profile, cart, addresses, wishlist.
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /cart/{itemId} {
+        allow read, write: if isOwner(userId);
+      }
+      match /addresses/{addressId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Orders: a user may create their own order and read only their own orders.
+    // Orders should never be editable by the customer after creation.
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Admin allow-list. Populate manually in the Firebase console
+    // (collection "admins", one document per admin uid, e.g. { email: "..." }).
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false; // manage from the Firebase console only
+    }
+  }
+}
