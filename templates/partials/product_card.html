@@ -1,0 +1,57 @@
+{# ==========================================================================
+   Product card macro — server-rendered from Firestore data at build time.
+   Used by tpl_index.html (featured), tpl_catalog.html (full grid) and
+   tpl_category.html (category grid). Keeps the exact same markup/classes
+   the client JS (cart/wishlist buttons, slideshow) already expects, so
+   assets/js for add-to-cart/wishlist keeps working unchanged — it just
+   attaches to already-rendered DOM instead of building it from Firestore.
+
+   data-* attributes carry the raw (untranslated) filter values so the
+   catalog/category page's client-side filter script can show/hide cards
+   without any Firestore read.
+   ========================================================================= #}
+{% macro product_card(p, lang, t, eager=False) %}
+<div class="product-card animate-on-scroll"
+     data-url="{{ url_for_product(p, lang) }}"
+     data-id="{{ p.id }}"
+     data-category="{{ p.categorySlug }}"
+     data-country="{{ p.country }}"
+     data-region="{{ p.region }}"
+     data-appellation="{{ p.appellation }}"
+     data-sweetness="{{ p.sweetness }}"
+     data-grape="{{ (p.grapeVarieties or []) | join(',') }}"
+     data-volume="{{ p.volume }}"
+     data-year="{{ p.year }}"
+     data-price="{{ p.price }}"
+     data-name="{{ p.name | lower }}">
+    <a href="{{ url_for_product(p, lang) }}" class="slideshow-container">
+        {% set images = p.imageUrls if p.imageUrls else [p.imageUrl] %}
+        {% for img in images %}
+        <div class="slideshow-item{% if loop.first %} active{% endif %}">
+            <img src="{{ img }}" alt="{{ p.name }} view {{ loop.index }}"
+                 loading="{{ 'eager' if eager and loop.first else 'lazy' }}"
+                 width="300" height="400" style="aspect-ratio: 3/4; object-fit: cover;">
+        </div>
+        {% endfor %}
+        {% if p.badge %}<div class="product-badge">{{ p.badge }}</div>{% endif %}
+    </a>
+    <button class="wishlist-toggle-btn" data-product-id="{{ p.id }}" aria-label="{{ t.add_to_wishlist }}"><i class="far fa-heart"></i></button>
+    <div class="product-info-card">
+        <div>
+            <div class="product-subtitle">{{ [p.categoryLabel, p.sweetness] | select | join(' ') }}{% if p.region or p.country %} {{ 'from' if lang == 'en' else '' }} {{ [p.region, p.country] | select | join(', ') }}{% endif %}</div>
+            <h3 class="product-name"><a href="{{ url_for_product(p, lang) }}">{{ p.name }}</a></h3>
+            <p class="product-description">{{ p.metaDescription or p.description or '' }}</p>
+        </div>
+        <div>
+            <div class="product-price-row">
+                <div class="price">${{ "%.2f"|format(p.price or 0) }}</div>
+                {% if p.oldPrice %}<div class="old-price">${{ "%.2f"|format(p.oldPrice) }}</div>{% endif %}
+            </div>
+            <button class="add-to-cart-btn" data-product-id="{{ p.id }}">
+                <i class="fas fa-shopping-cart"></i> {{ t.add_to_cart }}
+                <span class="cart-quantity-badge"></span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endmacro %}

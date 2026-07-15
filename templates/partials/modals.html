@@ -1,0 +1,20 @@
+<div id="login-modal" class="login-modal">
+    <div class="login-modal-content">
+        <button class="close-modal-btn" aria-label="Close">&times;</button>
+        <h3>{{ t.auth_title }}</h3>
+        <p>{{ t.auth_subtitle }}</p>
+        <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> {{ t.auth_google }}</button>
+        <div class="separator"><span>{{ t.auth_or }}</span></div>
+        <form id="auth-form"><div class="form-group"><input type="email" id="auth-email" placeholder="{{ t.auth_email_placeholder }}" required></div><div class="form-group"><input type="password" id="auth-password" placeholder="{{ t.auth_password_placeholder }}" required></div><div class="error-message" id="auth-error"></div><button type="submit" class="auth-submit-btn">{{ t.auth_continue_email }}</button></form>
+        <a href="#" id="forgot-password-link" class="forgot-password">{{ t.auth_forgot }}</a>
+    </div>
+</div>
+
+<div id="search-modal" class="search-modal">
+    <div class="search-modal-content">
+        <button class="close-search-modal-btn" aria-label="Close"><i class="fas fa-times"></i></button>
+        <form id="desktop-search-form" class="search-box"><input type="text" id="desktop-search-input" placeholder="{{ t.search_placeholder_long }}"><button type="submit" aria-label="{{ t.search }}"><i class="fas fa-search"></i></button></form>
+    </div>
+</div>
+
+<div id="toast-container"></div>

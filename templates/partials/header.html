@@ -1,0 +1,53 @@
+<header>
+    <div class="container">
+        <div class="header-content">
+            <a href="{{ url_for('index', lang) }}" class="logo">Vino<span>Elite</span></a>
+            <nav class="nav-links" id="main-nav">
+                <a href="{{ url_for('index', lang) }}"{% if active_page == 'index' %} class="active"{% endif %}>{{ t.nav_home }}</a>
+                <a href="{{ url_for('catalog', lang) }}"{% if active_page == 'catalog' %} class="active"{% endif %}>{{ t.nav_catalog }}</a>
+                <a href="#">{{ t.nav_collections }}</a>
+                <a href="#">{{ t.nav_wineries }}</a>
+                <a href="#">{{ t.nav_about }}</a>
+                <div class="mobile-actions">
+                    <div class="mobile-search">
+                        <form class="search-box">
+                            <input type="text" placeholder="{{ t.search_placeholder }}">
+                            <button type="submit" aria-label="{{ t.search }}"><i class="fas fa-search"></i></button>
+                        </form>
+                    </div>
+                    <a href="{{ url_for('profile', lang) }}" class="mobile-action-btn" id="mobile-auth-button">
+                        <i class="far fa-user"></i>
+                        <span>{{ t.nav_signin }}</span>
+                    </a>
+                    <a href="{{ url_for('cart', lang) }}" class="mobile-action-btn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>{{ t.nav_cart }}</span>
+                        <span class="cart-count">0</span>
+                    </a>
+                    <a href="{{ url_for('profile', lang) }}#wishlist" class="mobile-action-btn">
+                        <i class="far fa-heart"></i>
+                        <span>{{ t.nav_wishlist }}</span>
+                        <span class="wishlist-count">0</span>
+                    </a>
+                    <div class="lang-switcher mobile-lang-switcher">
+                        {% for code, label in languages.items() %}
+                        <a href="{{ alt_urls[code] }}" class="lang-link{% if code == lang %} active{% endif %}">{{ label }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </nav>
+            <div class="header-actions">
+                <button class="search-btn desktop-only" title="{{ t.search }}" aria-label="{{ t.search }}"><i class="fas fa-search"></i></button>
+                <a href="{{ url_for('profile', lang) }}#wishlist" class="wishlist-btn desktop-only" title="{{ t.nav_wishlist }}" aria-label="{{ t.nav_wishlist }}"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                <a href="{{ url_for('profile', lang) }}" class="auth-btn desktop-only" id="auth-button" title="{{ t.nav_signin }}"><i class="far fa-user"></i><span class="auth-text">{{ t.nav_signin }}</span></a>
+                <a href="{{ url_for('cart', lang) }}" class="cart-btn desktop-only" title="{{ t.nav_cart }}" aria-label="{{ t.nav_cart }}"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                <div class="lang-switcher desktop-only">
+                    {% for code, label in languages.items() %}
+                    <a href="{{ alt_urls[code] }}" class="lang-link{% if code == lang %} active{% endif %}">{{ label }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <button class="mobile-menu-btn" aria-label="{{ t.menu }}"><i class="fas fa-bars"></i></button>
+        </div>
+    </div>
+</header>

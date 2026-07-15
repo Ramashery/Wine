@@ -1,0 +1,11 @@
+<footer id="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-column"><h3>VinoElite</h3><ul class="footer-links"><li><a href="#">{{ t.footer_about }}</a></li><li><a href="#">{{ t.footer_contact }}</a></li><li><a href="#">{{ t.footer_shipping }}</a></li><li><a href="#">{{ t.footer_returns }}</a></li></ul></div>
+            <div class="footer-column"><h3>{{ t.nav_catalog }}</h3><ul class="footer-links"><li><a href="{{ url_for_category('red-wine', lang) }}">{{ t.footer_red_wines }}</a></li><li><a href="{{ url_for_category('white-wine', lang) }}">{{ t.footer_white_wines }}</a></li><li><a href="{{ url_for_category('sparkling-wine', lang) }}">{{ t.footer_sparkling_wines }}</a></li><li><a href="{{ url_for_category('spirits', lang) }}">{{ t.footer_spirits }}</a></li></ul></div>
+            <div class="footer-column"><h3>{{ t.footer_help }}</h3><ul class="footer-links"><li><a href="#">{{ t.footer_faq }}</a></li><li><a href="#">{{ t.footer_terms }}</a></li><li><a href="#">{{ t.footer_privacy }}</a></li><li><a href="#">{{ t.footer_sitemap }}</a></li></ul></div>
+            <div class="footer-column"><h3>{{ t.footer_contacts }}</h3><ul class="footer-links"><li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li><li><i class="fas fa-envelope"></i> info@vinoelite.com</li><li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li></ul><div class="social-links"><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div>
+        </div>
+        <div class="footer-bottom"><p>&copy; {{ year }} VinoElite. {{ t.footer_rights }}</p></div>
+    </div>
+</footer>
