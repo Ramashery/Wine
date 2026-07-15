@@ -1,0 +1,60 @@
+{
+  "hero": {
+    "globalFields": { "heroBgImage": "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1600" },
+    "translations": {
+      "en": { "heroSubtitle": "Our finest selection", "heroTitle": "Exclusive Wines", "heroDescription": "From around the world, delivered to you." },
+      "ru": { "heroSubtitle": "Наша лучшая подборка", "heroTitle": "Эксклюзивные вина", "heroDescription": "Со всего мира — с доставкой к вам." },
+      "ka": { "heroSubtitle": "ჩვენი საუკეთესო შერჩევა", "heroTitle": "ექსკლუზიური ღვინოები", "heroDescription": "მთელი მსოფლიოდან, მიწოდებული თქვენთვის." }
+    }
+  },
+  "categories": {
+    "red-wine": {
+      "globalFields": { "slug": "red-wine", "sortOrder": 1, "status": "published", "image": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800" },
+      "translations": {
+        "en": { "name": "Red Wine", "description": "Bold and structured reds from the world's finest vineyards.", "seoTitle": "Red Wine Collection - VinoElite", "metaDescription": "Shop exclusive red wines at VinoElite." },
+        "ru": { "name": "Красное вино", "description": "Насыщенные красные вина с лучших виноградников мира.", "seoTitle": "Коллекция красных вин - VinoElite", "metaDescription": "Эксклюзивные красные вина в VinoElite." },
+        "ka": { "name": "წითელი ღვინო", "description": "მდიდარი წითელი ღვინოები მსოფლიოს საუკეთესო ვენახებიდან.", "seoTitle": "წითელი ღვინის კოლექცია - VinoElite", "metaDescription": "ექსკლუზიური წითელი ღვინოები VinoElite-ში." }
+      }
+    },
+    "white-wine": {
+      "globalFields": { "slug": "white-wine", "sortOrder": 2, "status": "published", "image": "https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800" },
+      "translations": {
+        "en": { "name": "White Wine", "description": "Crisp, elegant whites for every occasion.", "seoTitle": "White Wine Collection - VinoElite", "metaDescription": "Shop exclusive white wines at VinoElite." },
+        "ru": { "name": "Белое вино", "description": "Свежие, элегантные белые вина на любой случай.", "seoTitle": "Коллекция белых вин - VinoElite", "metaDescription": "Эксклюзивные белые вина в VinoElite." },
+        "ka": { "name": "თეთრი ღვინო", "description": "სუფთა, ელეგანტური თეთრი ღვინოები ნებისმიერი შემთხვევისთვის.", "seoTitle": "თეთრი ღვინის კოლექცია - VinoElite", "metaDescription": "ექსკლუზიური თეთრი ღვინოები VinoElite-ში." }
+      }
+    }
+  },
+  "products": {
+    "demo-chateau-margaux": {
+      "globalFields": {
+        "slug": "chateau-margaux-2018", "categoryId": "red-wine", "categorySlug": "red-wine",
+        "price": 890, "oldPrice": null, "status": "published",
+        "imageUrl": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800",
+        "imageUrls": ["https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800"],
+        "badge": "Exclusive", "rating": 4.8, "reviewCount": 12, "stock": 24,
+        "grapeVarieties": ["Cabernet Sauvignon", "Merlot"], "volume": "750ml", "alcohol": "13.5", "year": "2018", "brand": "Château Margaux"
+      },
+      "translations": {
+        "en": { "name": "Château Margaux 2018", "description": "A legendary Bordeaux with notes of blackcurrant, violet and cedar.", "metaDescription": "Château Margaux 2018 — exceptional Bordeaux red wine.", "sweetness": "Dry", "region": "Margaux", "country": "France", "appellation": "Margaux AOC", "tastingNotes": "Aroma: blackcurrant, violet, cedar\nPalate: full-bodied, firm tannins, long finish", "foodPairing": "Pairs beautifully with red meat, game and aged cheeses." },
+        "ru": { "name": "Шато Марго 2018", "description": "Легендарное бордоское вино с нотами черной смородины, фиалки и кедра.", "metaDescription": "Шато Марго 2018 — исключительное бордоское красное вино.", "sweetness": "Сухое", "region": "Марго", "country": "Франция", "appellation": "Марго AOC", "tastingNotes": "Аромат: чёрная смородина, фиалка, кедр\nВо вкусе: полнотелое, плотные танины, долгое послевкусие", "foodPairing": "Прекрасно сочетается с красным мясом, дичью и выдержанными сырами." },
+        "ka": { "name": "შატო მარგო 2018", "description": "ლეგენდარული ბორდო ღვინო შავი მაყვლის, იების და კედარის ტონებით.", "metaDescription": "შატო მარგო 2018 — გამორჩეული ბორდო წითელი ღვინო.", "sweetness": "მშრალი", "region": "მარგო", "country": "საფრანგეთი", "appellation": "მარგო AOC", "tastingNotes": "არომატი: შავი მაყვალი, იები, კედარი\nგემო: სავსე სხეულით, მკვრივი ტანინები", "foodPairing": "იდეალურია წითელ ხორცთან და გამომწვარ ყველთან." }
+      }
+    },
+    "demo-chablis-grand-cru": {
+      "globalFields": {
+        "slug": "chablis-grand-cru-2020", "categoryId": "white-wine", "categorySlug": "white-wine",
+        "price": 420, "oldPrice": 480, "status": "published",
+        "imageUrl": "https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800",
+        "imageUrls": ["https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800"],
+        "badge": "Sale", "rating": 4.6, "reviewCount": 8, "stock": 40,
+        "grapeVarieties": ["Chardonnay"], "volume": "750ml", "alcohol": "12.5", "year": "2020", "brand": ""
+      },
+      "translations": {
+        "en": { "name": "Chablis Grand Cru 2020", "description": "Crisp, mineral-driven white wine from the finest Chablis vineyards.", "metaDescription": "Chablis Grand Cru 2020 — premium French white wine.", "sweetness": "Dry", "region": "Chablis", "country": "France", "appellation": "Chablis Grand Cru AOC", "tastingNotes": "Aroma: citrus, green apple, flint\nPalate: bright acidity, mineral finish", "foodPairing": "Excellent with oysters, seafood and goat cheese." },
+        "ru": { "name": "Шабли Гран Крю 2020", "description": "Свежее минеральное белое вино с лучших виноградников Шабли.", "metaDescription": "Шабли Гран Крю 2020 — премиальное французское белое вино.", "sweetness": "Сухое", "region": "Шабли", "country": "Франция", "appellation": "Шабли Гран Крю AOC", "tastingNotes": "Аромат: цитрус, зелёное яблоко, кремень\nВо вкусе: яркая кислотность, минеральное послевкусие", "foodPairing": "Отлично сочетается с устрицами, морепродуктами и козьим сыром." },
+        "ka": { "name": "შაბლი გრან კრიუ 2020", "description": "სიცოცხლისუნარიანი, მინერალური თეთრი ღვინო შაბლის საუკეთესო ვენახებიდან.", "metaDescription": "შაბლი გრან კრიუ 2020 — პრემიუმ ფრანგული თეთრი ღვინო.", "sweetness": "მშრალი", "region": "შაბლი", "country": "საფრანგეთი", "appellation": "შაბლი გრან კრიუ AOC", "tastingNotes": "არომატი: ციტრუსი, მწვანე ვაშლი\nგემო: ნათელი მჟავიანობა", "foodPairing": "შესანიშნავია ხამანწკებთან და ზღვის პროდუქტებთან." }
+      }
+    }
+  }
+}

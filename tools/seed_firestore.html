@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VinoElite — Firestore Seeder</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 20px; background: #0f0f0f; color: #f5f5f5;
+    font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.4rem; font-weight: 600; color: #e8c8a0; margin-bottom: 4px; }
+  p.sub { color: #b0b0b0; margin-top: 0; margin-bottom: 20px; font-size: 0.9rem; }
+  .card { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-size: 0.8rem; color: #b0b0b0; margin: 10px 0 4px; }
+  input[type=text], input[type=password], textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+    background: #0f0f0f; color: #f5f5f5; font-size: 0.95rem;
+  }
+  textarea { min-height: 90px; font-family: monospace; font-size: 0.8rem; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 140px; }
+  button {
+    width: 100%; padding: 14px; margin-top: 16px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #c19a6b 0%, #a67c52 100%);
+    color: #0f0f0f; font-weight: 700; font-size: 1rem; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; }
+  button.secondary { background: rgba(255,255,255,0.08); color: #f5f5f5; border: 1px solid rgba(255,255,255,0.15); }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+  .checkbox-row input { width: 18px; height: 18px; }
+  #log {
+    background: #000; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.78rem;
+    max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .ok { color: #2ecc71; }
+  .err { color: #e74c3c; }
+  .warn { color: #ffc107; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; background: rgba(193,154,107,0.2); color: #e8c8a0; margin-left: 6px; }
+</style>
+</head>
+<body>
+
+<h1>VinoElite — Firestore Seeder <span class="badge">run once</span></h1>
+<p class="sub">Open this file in a mobile or desktop browser to create the initial Firestore structure (site content, categories, sample products) for a fresh project. Safe to re-run — it uses fixed document IDs and <code>set(..., {merge:true})</code>, so it will not create duplicates.</p>
+
+<div class="card">
+  <label>Firebase config (JSON, from Firebase Console → Project settings → Your apps)</label>
+  <textarea id="config">{
+  "apiKey": "AIzaSyBflzOWVf3HgDpdUhha3qvyeUJf7i6dOuk",
+  "authDomain": "wine-91d0e.firebaseapp.com",
+  "projectId": "wine-91d0e",
+  "storageBucket": "wine-91d0e.firebasestorage.app",
+  "messagingSenderId": "1021620433427",
+  "appId": "1:1021620433427:web:5439252fb350c4455a85e6"
+}</textarea>
+
+  <div class="checkbox-row"><input type="checkbox" id="chk-hero" checked><label style="margin:0" for="chk-hero">Seed siteContent/hero</label></div>
+  <div class="checkbox-row"><input type="checkbox" id="chk-categories" checked><label style="margin:0" for="chk-categories">Seed categories</label></div>
+  <div class="checkbox-row"><input type="checkbox" id="chk-products" checked><label style="margin:0" for="chk-products">Seed sample products (3 items, multilingual fields)</label></div>
+  <div class="checkbox-row"><input type="checkbox" id="chk-settings" checked><label style="margin:0" for="chk-settings">Seed siteSettings (shipping, currency, languages)</label></div>
+
+  <button id="seed-btn">Seed Firestore Database</button>
+  <button id="verify-btn" class="secondary">Verify (read-only check)</button>
+</div>
+
+<div class="card">
+  <label style="margin-top:0">Log</label>
+  <div id="log">Waiting…</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection, getDocs
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+const logEl = document.getElementById('log');
+function log(msg, cls) {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = ''; }
+
+let db = null;
+function getDb() {
+  if (db) return db;
+  const cfg = JSON.parse(document.getElementById('config').value);
+  const app = initializeApp(cfg);
+  db = getFirestore(app);
+  return db;
+}
+
+// ---------------------------------------------------------------------
+// SEED DATA
+// v2 schema: each product/category/hero doc has
+//   globalFields:  { ...fields that are the SAME in every language: price,
+//                     images, stock, category id, grape variety names... }
+//   translations:  { en: {...}, ru: {...}, ka: {...} }  — the fields that
+//                     actually differ per language: name, description, etc.
+// This matches what generate_site.py (Admin SDK, build-time) and
+// assets/js/site.js's flattenProduct() (client-side, for cart/profile)
+// both expect. See generate_site.py's module docstring for the full field
+// list.
+// ---------------------------------------------------------------------
+
+const HERO_DOC = {
+  globalFields: {
+    heroBgImage: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1600"
+  },
+  translations: {
+    en: { heroSubtitle: "Our finest selection", heroTitle: "Exclusive Wines", heroDescription: "From around the world, delivered to you." },
+    ru: { heroSubtitle: "Наша лучшая подборка", heroTitle: "Эксклюзивные вина", heroDescription: "Со всего мира — с доставкой к вам." },
+    ka: { heroSubtitle: "ჩვენი საუკეთესო შერჩევა", heroTitle: "ექსკლუზიური ღვინოები", heroDescription: "მთელი მსოფლიოდან, მიწოდებული თქვენთვის." }
+  }
+};
+
+const CATEGORIES = [
+  {
+    id: "red-wine",
+    globalFields: { slug: "red-wine", sortOrder: 1, status: "published", image: "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800" },
+    translations: {
+      en: { name: "Red Wine", description: "Bold and structured reds from the world's finest vineyards.", seoTitle: "Red Wine Collection - VinoElite", metaDescription: "Shop exclusive red wines at VinoElite." },
+      ru: { name: "Красное вино", description: "Насыщенные красные вина с лучших виноградников мира.", seoTitle: "Коллекция красных вин - VinoElite", metaDescription: "Эксклюзивные красные вина в VinoElite." },
+      ka: { name: "წითელი ღვინო", description: "მდიდარი წითელი ღვინოები მსოფლიოს საუკეთესო ვენახებიდან.", seoTitle: "წითელი ღვინის კოლექცია - VinoElite", metaDescription: "ექსკლუზიური წითელი ღვინოები VinoElite-ში." }
+    }
+  },
+  {
+    id: "white-wine",
+    globalFields: { slug: "white-wine", sortOrder: 2, status: "published", image: "https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800" },
+    translations: {
+      en: { name: "White Wine", description: "Crisp, elegant whites for every occasion.", seoTitle: "White Wine Collection - VinoElite", metaDescription: "Shop exclusive white wines at VinoElite." },
+      ru: { name: "Белое вино", description: "Свежие, элегантные белые вина на любой случай.", seoTitle: "Коллекция белых вин - VinoElite", metaDescription: "Эксклюзивные белые вина в VinoElite." },
+      ka: { name: "თეთრი ღვინო", description: "სუფთა, ელეგანტური თეთრი ღვინოები ნებისმიერი შემთხვევისთვის.", seoTitle: "თეთრი ღვინის კოლექცია - VinoElite", metaDescription: "ექსკლუზიური თეთრი ღვინოები VinoElite-ში." }
+    }
+  },
+  {
+    id: "sparkling-wine",
+    globalFields: { slug: "sparkling-wine", sortOrder: 3, status: "published", image: "https://images.unsplash.com/photo-1594372097374-5dcc41f4e18e?w=800" },
+    translations: {
+      en: { name: "Sparkling Wine", description: "Celebration-ready bubbles from the world's top houses.", seoTitle: "Sparkling Wine Collection - VinoElite", metaDescription: "Shop exclusive sparkling wines at VinoElite." },
+      ru: { name: "Игристое вино", description: "Праздничные игристые вина от лучших домов мира.", seoTitle: "Коллекция игристых вин - VinoElite", metaDescription: "Эксклюзивные игристые вина в VinoElite." },
+      ka: { name: "ცქრიალა ღვინო", description: "საზეიმო ცქრიალა ღვინოები მსოფლიოს საუკეთესო სახლებიდან.", seoTitle: "ცქრიალა ღვინის კოლექცია - VinoElite", metaDescription: "ექსკლუზიური ცქრიალა ღვინოები VinoElite-ში." }
+    }
+  },
+  {
+    id: "spirits",
+    globalFields: { slug: "spirits", sortOrder: 4, status: "published", image: "" },
+    translations: {
+      en: { name: "Spirits", description: "Premium spirits for the connoisseur.", seoTitle: "Spirits Collection - VinoElite", metaDescription: "Shop exclusive spirits at VinoElite." },
+      ru: { name: "Крепкие напитки", description: "Премиальные крепкие напитки для ценителей.", seoTitle: "Коллекция крепких напитков - VinoElite", metaDescription: "Эксклюзивные крепкие напитки в VinoElite." },
+      ka: { name: "სპირტიანი სასმელები", description: "პრემიუმ სპირტიანი სასმელები დამფასებლებისთვის.", seoTitle: "სპირტიანი სასმელების კოლექცია - VinoElite", metaDescription: "ექსკლუზიური სპირტიანი სასმელები VinoElite-ში." }
+    }
+  }
+];
+
+const PRODUCTS = [
+  {
+    id: "demo-chateau-margaux",
+    globalFields: {
+      slug: "chateau-margaux-2018", categoryId: "red-wine", categorySlug: "red-wine",
+      price: 890, oldPrice: null, status: "published",
+      imageUrl: "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800",
+      imageUrls: ["https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=800"],
+      badge: "Exclusive", rating: 4.8, reviewCount: 12, stock: 24,
+      grapeVarieties: ["Cabernet Sauvignon", "Merlot"], volume: "750ml", alcohol: "13.5", year: "2018", brand: "Château Margaux"
+    },
+    translations: {
+      en: { name: "Château Margaux 2018", description: "A legendary Bordeaux with notes of blackcurrant, violet and cedar.", metaDescription: "Château Margaux 2018 — exceptional Bordeaux red wine.", sweetness: "Dry", region: "Margaux", country: "France", appellation: "Margaux AOC", tastingNotes: "Aroma: blackcurrant, violet, cedar\nPalate: full-bodied, firm tannins, long finish", foodPairing: "Pairs beautifully with red meat, game and aged cheeses." },
+      ru: { name: "Шато Марго 2018", description: "Легендарное бордоское вино с нотами черной смородины, фиалки и кедра.", metaDescription: "Шато Марго 2018 — исключительное бордоское красное вино.", sweetness: "Сухое", region: "Марго", country: "Франция", appellation: "Марго AOC", tastingNotes: "Аромат: чёрная смородина, фиалка, кедр\nВо вкусе: полнотелое, плотные танины, долгое послевкусие", foodPairing: "Прекрасно сочетается с красным мясом, дичью и выдержанными сырами." },
+      ka: { name: "შატო მარგო 2018", description: "ლეგენდარული ბორდო ღვინო შავი მაყვლის, იების და კედარის ტონებით.", metaDescription: "შატო მარგო 2018 — გამორჩეული ბორდო წითელი ღვინო.", sweetness: "მშრალი", region: "მარგო", country: "საფრანგეთი", appellation: "მარგო AOC", tastingNotes: "არომატი: შავი მაყვალი, იები, კედარი\nგემო: სავსე სხეულით, მკვრივი ტანინები", foodPairing: "იდეალურია წითელ ხორცთან და გამომწვარ ყველთან." }
+    }
+  },
+  {
+    id: "demo-chablis-grand-cru",
+    globalFields: {
+      slug: "chablis-grand-cru-2020", categoryId: "white-wine", categorySlug: "white-wine",
+      price: 420, oldPrice: 480, status: "published",
+      imageUrl: "https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800",
+      imageUrls: ["https://images.unsplash.com/photo-1566452348683-ba694fdcbf72?w=800"],
+      badge: "Sale", rating: 4.6, reviewCount: 8, stock: 40,
+      grapeVarieties: ["Chardonnay"], volume: "750ml", alcohol: "12.5", year: "2020", brand: ""
+    },
+    translations: {
+      en: { name: "Chablis Grand Cru 2020", description: "Crisp, mineral-driven white wine from the finest Chablis vineyards.", metaDescription: "Chablis Grand Cru 2020 — premium French white wine.", sweetness: "Dry", region: "Chablis", country: "France", appellation: "Chablis Grand Cru AOC", tastingNotes: "Aroma: citrus, green apple, flint\nPalate: bright acidity, mineral finish", foodPairing: "Excellent with oysters, seafood and goat cheese." },
+      ru: { name: "Шабли Гран Крю 2020", description: "Свежее минеральное белое вино с лучших виноградников Шабли.", metaDescription: "Шабли Гран Крю 2020 — премиальное французское белое вино.", sweetness: "Сухое", region: "Шабли", country: "Франция", appellation: "Шабли Гран Крю AOC", tastingNotes: "Аромат: цитрус, зелёное яблоко, кремень\nВо вкусе: яркая кислотность, минеральное послевкусие", foodPairing: "Отлично сочетается с устрицами, морепродуктами и козьим сыром." },
+      ka: { name: "შაბლი გრან კრიუ 2020", description: "სიცოცხლისუნარიანი, მინერალური თეთრი ღვინო შაბლის საუკეთესო ვენახებიდან.", metaDescription: "შაბლი გრან კრიუ 2020 — პრემიუმ ფრანგული თეთრი ღვინო.", sweetness: "მშრალი", region: "შაბლი", country: "საფრანგეთი", appellation: "შაბლი გრან კრიუ AOC", tastingNotes: "არომატი: ციტრუსი, მწვანე ვაშლი\nგემო: ნათელი მჟავიანობა", foodPairing: "შესანიშნავია ხამანწკებთან და ზღვის პროდუქტებთან." }
+    }
+  },
+  {
+    id: "demo-dom-perignon",
+    globalFields: {
+      slug: "dom-perignon-vintage-2013", categoryId: "sparkling-wine", categorySlug: "sparkling-wine",
+      price: 1250, oldPrice: null, status: "published",
+      imageUrl: "https://images.unsplash.com/photo-1594372097374-5dcc41f4e18e?w=800",
+      imageUrls: ["https://images.unsplash.com/photo-1594372097374-5dcc41f4e18e?w=800"],
+      badge: "New", rating: 5.0, reviewCount: 3, stock: 10,
+      grapeVarieties: ["Chardonnay", "Pinot Noir"], volume: "750ml", alcohol: "12.5", year: "2013", brand: "Dom Pérignon"
+    },
+    translations: {
+      en: { name: "Dom Pérignon Vintage 2013", description: "Iconic vintage champagne with fine bubbles and citrus-brioche character.", metaDescription: "Dom Pérignon Vintage 2013 — prestige champagne cuvée.", sweetness: "Brut", region: "Champagne", country: "France", appellation: "Champagne AOC", tastingNotes: "Aroma: citrus, brioche, white flowers\nPalate: fine mousse, long mineral finish", foodPairing: "Ideal with caviar, shellfish and celebration dinners." },
+      ru: { name: "Dom Pérignon Vintage 2013", description: "Культовое винтажное шампанское с тонкими пузырьками и цитрусово-бриошевым характером.", metaDescription: "Dom Pérignon Vintage 2013 — престижная кюве шампанского.", sweetness: "Брют", region: "Шампань", country: "Франция", appellation: "Шампань AOC", tastingNotes: "Аромат: цитрус, бриошь, белые цветы\nВо вкусе: тонкий мусс, долгое минеральное послевкусие", foodPairing: "Идеально с икрой, морепродуктами и праздничным ужином." },
+      ka: { name: "Dom Pérignon Vintage 2013", description: "იკონური ვინტაჟ შამპანური ნატიფი ბუშტუკებით და ციტრუს-ბრიოშის ხასიათით.", metaDescription: "Dom Pérignon Vintage 2013 — პრესტიჟული შამპანური კუვე.", sweetness: "ბრიუტი", region: "შამპანი", country: "საფრანგეთი", appellation: "შამპანი AOC", tastingNotes: "არომატი: ციტრუსი, ბრიოში, თეთრი ყვავილები\nგემო: ნატიფი ქაფი", foodPairing: "იდეალურია ხიზილალასთან და საზეიმო ვახშამთან." }
+    }
+  }
+];
+
+const SITE_SETTINGS = {
+  globalFields: {
+    supportedLanguages: ["en", "ru", "ka"], defaultLanguage: "en", currency: "USD",
+    freeShippingThreshold: 300, contactEmail: "info@vinoelite.com", contactPhone: "+7 (495) 123-45-67",
+    socialLinks: { instagram: "", facebook: "", telegram: "", whatsapp: "" }
+  }
+};
+
+async function seedHero(db) {
+  await setDoc(doc(db, "siteContent", "hero"), HERO_DOC, { merge: true });
+  log("✔ siteContent/hero seeded", "ok");
+}
+
+async function seedCategories(db) {
+  for (const cat of CATEGORIES) {
+    const { id, ...data } = cat;
+    await setDoc(doc(db, "categories", id), data, { merge: true });
+    log(`✔ categories/${id} seeded`, "ok");
+  }
+}
+
+async function seedProducts(db) {
+  for (const prod of PRODUCTS) {
+    const { id, ...data } = prod;
+    await setDoc(doc(db, "products", id), data, { merge: true });
+    log(`✔ products/${id} seeded`, "ok");
+  }
+}
+
+async function seedSettings(db) {
+  await setDoc(doc(db, "siteContent", "settings"), SITE_SETTINGS, { merge: true });
+  log("✔ siteContent/settings seeded", "ok");
+}
+
+document.getElementById('seed-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('seed-btn');
+  btn.disabled = true;
+  clearLog();
+  try {
+    const db = getDb();
+    log("Connecting to Firestore…");
+    if (document.getElementById('chk-hero').checked) await seedHero(db);
+    if (document.getElementById('chk-categories').checked) await seedCategories(db);
+    if (document.getElementById('chk-products').checked) await seedProducts(db);
+    if (document.getElementById('chk-settings').checked) await seedSettings(db);
+    log("Done. Your Firestore database now has the base structure.", "ok");
+    log("Reminder: set up Firestore Security Rules before going live (see firestore.rules).", "warn");
+  } catch (err) {
+    log("✖ Error: " + err.message, "err");
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('verify-btn').addEventListener('click', async () => {
+  clearLog();
+  try {
+    const db = getDb();
+    log("Checking existing data…");
+    const heroSnap = await getDoc(doc(db, "siteContent", "hero"));
+    log(heroSnap.exists() ? "✔ siteContent/hero exists" : "✖ siteContent/hero missing", heroSnap.exists() ? "ok" : "warn");
+    const catSnap = await getDocs(collection(db, "categories"));
+    log(`categories: ${catSnap.size} document(s)`, catSnap.size > 0 ? "ok" : "warn");
+    const prodSnap = await getDocs(collection(db, "products"));
+    log(`products: ${prodSnap.size} document(s)`, prodSnap.size > 0 ? "ok" : "warn");
+    const settingsSnap = await getDoc(doc(db, "siteContent", "settings"));
+    log(settingsSnap.exists() ? "✔ siteContent/settings exists" : "✖ siteContent/settings missing", settingsSnap.exists() ? "ok" : "warn");
+  } catch (err) {
+    log("✖ Error: " + err.message, "err");
+  }
+});
+</script>
+</body>
+</html>
