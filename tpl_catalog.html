@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect to external services for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="{{ description }}" />
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+
+    <!-- Schema.org (main.js keeps this up to date once filters/products load) -->
+    <script type="application/ld+json" id="schema-json">{{ catalog_schema | tojson }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="catalog">
+    <div id="main-site-content" class="loaded" style="opacity: 1;">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                    <nav class="nav-links" id="main-nav">
+                        <a href="/index.html">Home</a>
+                        <a href="/catalog.html" class="active">Catalog</a>
+                        <a href="#">Collections</a>
+                        <a href="#">Wineries</a>
+                        <a href="#">About Us</a>
+                        <div class="mobile-actions">
+                            <div class="mobile-search">
+                                <form class="search-box">
+                                    <input type="text" placeholder="Search wines...">
+                                    <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                                </form>
+                            </div>
+                            <a href="/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                                <i class="far fa-user"></i>
+                                <span>Sign In / Register</span>
+                            </a>
+                            <a href="/cart.html" class="mobile-action-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Shopping Cart</span>
+                                <span class="cart-count">0</span>
+                            </a>
+                            <a href="/profile.html#wishlist" class="mobile-action-btn">
+                                <i class="far fa-heart"></i>
+                                <span>Wishlist</span>
+                                <span class="wishlist-count">0</span>
+                            </a>
+                        </div>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="search-btn desktop-only" title="Search" aria-label="Search"><i class="fas fa-search"></i></button>
+                        <a href="/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist" aria-label="Wishlist"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                        <a href="/profile.html" class="auth-btn desktop-only" id="auth-button" title="Sign In"><i class="far fa-user"></i><span class="auth-text">Sign In</span></a>
+                        <a href="/cart.html" class="cart-btn desktop-only" title="Cart" aria-label="Cart"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                    </div>
+                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <section class="breadcrumb-section" id="sticky-breadcrumbs">
+            <div class="container">
+                <div class="breadcrumb" id="breadcrumb-container"></div>
+            </div>
+        </section>
+
+        <section class="page-header animate-on-scroll">
+            <div class="container">
+                <h1 class="page-title">{{ page_heading }}</h1>
+            </div>
+        </section>
+
+        <div class="container">
+            <button class="mobile-filters-btn animate-on-scroll">
+                <i class="fas fa-filter"></i>
+                <span>Show Filters</span>
+            </button>
+
+            <div class="catalog-layout">
+                <aside class="filters-sidebar animate-on-scroll">
+                    <div class="filters-header">
+                        <h2 class="filters-title">Filters</h2>
+                        <button class="reset-filters">Reset All</button>
+                    </div>
+                    <div id="filters-container">
+                        <!-- Placeholder for filters while loading -->
+                        <div style="padding: 10px; color: var(--text-muted); font-size: 0.9rem;">
+                            <i class="fas fa-spinner fa-spin"></i> Loading filters...
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="products-section animate-on-scroll">
+                    <div class="products-toolbar">
+                        <div class="products-count">Loading wines...</div>
+                        <div class="toolbar-actions">
+                            <div class="sort-options">
+                                <select class="sort-select" id="sort-select" aria-label="Sort wines">
+                                    <option value="popularity">Popularity</option>
+                                    <option value="price-asc">Price (low to high)</option>
+                                    <option value="price-desc">Price (high to low)</option>
+                                    <option value="name-asc">Name (A-Z)</option>
+                                </select>
+                            </div>
+                            <div class="view-toggle">
+                                <button id="grid-view-btn" class="active" aria-label="Grid view"><i class="fas fa-th-large"></i></button>
+                                <button id="list-view-btn" aria-label="List view"><i class="fas fa-list"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="active-filters-container" id="active-filters-container"></div>
+
+                    <!-- SKELETON LOADING STRUCTURE -->
+                    <div class="products-grid grid-view" id="products-grid">
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-card-img"></div>
+                            <div class="skeleton-card-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-card-img"></div>
+                            <div class="skeleton-card-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-card-img"></div>
+                            <div class="skeleton-card-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                        <div class="product-card skeleton-card">
+                            <div class="skeleton-card-img"></div>
+                            <div class="skeleton-card-info">
+                                <div class="skeleton-text w-50"></div>
+                                <div class="skeleton-text w-80"></div>
+                                <div class="skeleton-text w-40"></div>
+                                <div class="skeleton-btn"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="load-more-container">
+                        <button class="load-more-btn" id="load-more-btn">Load More</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <footer id="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-column"><h3>VinoElite</h3><ul class="footer-links"><li><a href="#">About Us</a></li><li><a href="#">Contact</a></li><li><a href="#">Shipping & Payment</a></li><li><a href="#">Returns</a></li></ul></div>
+                    <div class="footer-column"><h3>Catalog</h3><ul class="footer-links"><li><a href="/red-wine">Red Wines</a></li><li><a href="/white-wine">White Wines</a></li><li><a href="/sparkling-wine">Sparkling Wines</a></li><li><a href="/spirits">Spirits</a></li></ul></div>
+                    <div class="footer-column"><h3>Help</h3><ul class="footer-links"><li><a href="#">FAQ</a></li><li><a href="#">Terms of Use</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Sitemap</a></li></ul></div>
+                    <div class="footer-column"><h3>Contacts</h3><ul class="footer-links"><li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li><li><i class="fas fa-envelope"></i> info@vinoelite.com</li><li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li></ul><div class="social-links"><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div>
+                </div>
+                <div class="footer-bottom"><p>&copy; 2023 VinoElite. All rights reserved.</p></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="login-modal" class="login-modal">
+        <div class="login-modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h3>Sign In or Sign Up</h3>
+            <p>to access your cart and wishlist across devices.</p>
+            <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="separator"><span>OR</span></div>
+            <form id="auth-form"><div class="form-group"><input type="email" id="auth-email" placeholder="Enter your email" required></div><div class="form-group"><input type="password" id="auth-password" placeholder="Enter your password" required></div><div class="error-message" id="auth-error"></div><button type="submit" class="auth-submit-btn">Continue with Email</button></form>
+            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
+        </div>
+    </div>
+
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <button class="close-search-modal-btn" aria-label="Close"><i class="fas fa-times"></i></button>
+            <form id="desktop-search-form" class="search-box"><input type="text" id="desktop-search-input" placeholder="Search for wines, regions, wineries..."><button type="submit" aria-label="Search"><i class="fas fa-search"></i></button></form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="/main.js" defer></script>
+</body>
+</html>

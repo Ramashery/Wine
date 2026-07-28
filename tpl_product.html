@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:type" content="product" />
+    <meta property="og:description" content="{{ description }}" />
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+
+    <!-- Schema.org: Product (built in generate_site.py, dumped with |tojson
+         so quotes/newlines in product data can never break the JSON) -->
+    <script type="application/ld+json">{{ product_schema | tojson }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="product">
+    <!-- LOADER REMOVED FOR LCP -->
+
+    <div id="main-site-content" class="loaded" style="opacity: 1;">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                    <nav class="nav-links" id="main-nav">
+                        <a href="/index.html">Home</a>
+                        <a href="/catalog.html">Catalog</a>
+                        <a href="#">Collections</a>
+                        <a href="#">Wineries</a>
+                        <a href="#">About Us</a>
+                        <div class="mobile-actions">
+                            <div class="mobile-search">
+                                <form class="search-box">
+                                    <input type="text" placeholder="Search wines...">
+                                    <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                                </form>
+                            </div>
+                            <a href="/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                                <i class="far fa-user"></i>
+                                <span>Sign In / Register</span>
+                            </a>
+                            <a href="/cart.html" class="mobile-action-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Shopping Cart</span>
+                                <span class="cart-count">0</span>
+                            </a>
+                            <a href="/profile.html#wishlist" class="mobile-action-btn">
+                                <i class="far fa-heart"></i>
+                                <span>Wishlist</span>
+                                <span class="wishlist-count">0</span>
+                            </a>
+                        </div>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="search-btn desktop-only" title="Search" aria-label="Search"><i class="fas fa-search"></i></button>
+                        <a href="/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist" aria-label="Wishlist"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                        <a href="/profile.html" class="auth-btn desktop-only" id="auth-button" title="Sign In"><i class="far fa-user"></i><span class="auth-text">Sign In</span></a>
+                        <a href="/cart.html" class="cart-btn desktop-only" title="Cart" aria-label="Cart"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                    </div>
+                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <section class="breadcrumb-section animate-on-scroll">
+            <div class="container">
+                <div class="breadcrumb" id="breadcrumb"></div>
+            </div>
+        </section>
+
+        <section class="product-section">
+            <div class="container">
+                <!-- SKELETON UI (Visible Immediately) -->
+                <div class="product-container skeleton-container" id="product-skeleton">
+                    <div class="skeleton-gallery">
+                        <div class="skeleton-main-img"></div>
+                        <div class="skeleton-thumbs">
+                            <div class="skeleton-thumb"></div>
+                            <div class="skeleton-thumb"></div>
+                            <div class="skeleton-thumb"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-subtitle"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text w-80"></div>
+                        <div class="skeleton-price"></div>
+                        <div class="skeleton-btn-large"></div>
+                    </div>
+                </div>
+
+                <!-- REAL CONTENT (hydrated by main.js, hidden until ready) -->
+                <div class="product-container animate-on-scroll" id="real-product-container" style="display: none;">
+                    <div class="product-gallery">
+                        <div class="product-gallery-main" id="product-gallery-main"></div>
+                        <div class="product-thumbnails" id="product-thumbnails"></div>
+                    </div>
+
+                    <div class="product-info">
+                        <h1 class="product-title" id="product-title"></h1>
+                        <div class="product-subtitle" id="product-subtitle"></div>
+                        <div class="product-rating" id="product-rating"></div>
+                        <p class="product-description" id="product-description"></p>
+                        <div class="product-details" id="product-details-list"></div>
+                        <div class="pricing" id="product-pricing"></div>
+                        <div class="stock-status" id="product-stock-status"></div>
+                        <div class="purchase-options">
+                            <div class="quantity-selector">
+                                <button class="quantity-btn minus" aria-label="Decrease quantity">-</button>
+                                <input type="text" class="quantity-input" value="1" readonly aria-label="Quantity">
+                                <button class="quantity-btn plus" aria-label="Increase quantity">+</button>
+                            </div>
+                            <button class="add-to-cart" id="add-to-cart-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Add to Cart</span>
+                                <span class="cart-quantity-badge"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="tabs-section animate-on-scroll">
+            <div class="container">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="tasting-notes">Tasting Notes</button>
+                    <button class="tab-btn" data-tab="food-pairing">Food Pairing</button>
+                    <button class="tab-btn" data-tab="reviews">Reviews</button>
+                </div>
+                <div class="tab-content active" id="tasting-notes-tab"></div>
+                <div class="tab-content" id="food-pairing-tab"></div>
+                <div class="tab-content" id="reviews-tab">
+                    <h3>Customer Reviews</h3>
+                    <div id="reviews-list"><p>Loading reviews...</p></div>
+                    <div id="review-form-container"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="related-section animate-on-scroll">
+            <div class="container">
+                <h2 class="section-title">You Might Also Like</h2>
+
+                <!-- SKELETON FOR RELATED PRODUCTS -->
+                <div class="products-grid" id="related-products-grid">
+                     <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer id="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-column"><h3>VinoElite</h3><ul class="footer-links"><li><a href="#">About Us</a></li><li><a href="#">Contact</a></li><li><a href="#">Shipping & Payment</a></li><li><a href="#">Returns</a></li></ul></div>
+                    <div class="footer-column"><h3>Catalog</h3><ul class="footer-links"><li><a href="/red-wine">Red Wines</a></li><li><a href="/white-wine">White Wines</a></li><li><a href="/sparkling-wine">Sparkling Wines</a></li><li><a href="/spirits">Spirits</a></li></ul></div>
+                    <div class="footer-column"><h3>Help</h3><ul class="footer-links"><li><a href="#">FAQ</a></li><li><a href="#">Terms of Use</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Sitemap</a></li></ul></div>
+                    <div class="footer-column"><h3>Contacts</h3><ul class="footer-links"><li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li><li><i class="fas fa-envelope"></i> info@vinoelite.com</li><li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li></ul><div class="social-links"><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div>
+                </div>
+                <div class="footer-bottom"><p>&copy; 2023 VinoElite. All rights reserved.</p></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="login-modal" class="login-modal">
+        <div class="login-modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h3>Sign In or Sign Up</h3>
+            <p>to access your cart and wishlist across devices.</p>
+            <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="separator"><span>OR</span></div>
+            <form id="auth-form">
+                <div class="form-group">
+                    <input type="email" id="auth-email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="auth-password" placeholder="Enter your password" required>
+                </div>
+                <div class="error-message" id="auth-error"></div>
+                <button type="submit" class="auth-submit-btn">Continue with Email</button>
+            </form>
+            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
+        </div>
+    </div>
+
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <button class="close-search-modal-btn" aria-label="Close">&times;</button>
+            <form id="desktop-search-form" class="search-box"><input type="text" id="desktop-search-input" placeholder="Search for wines, regions, wineries..."><button type="submit" aria-label="Search"><i class="fas fa-search"></i></button></form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="/main.js" defer></script>
+</body>
+</html>

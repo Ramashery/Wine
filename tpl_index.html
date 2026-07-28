@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:type" content="website" />
+    <meta property="og:description" content="{{ description }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta property="og:site_name" content="VinoElite" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body data-page="index">
+    <div id="loader">
+       <div class="spinner"></div>
+    </div>
+
+    <div id="main-site-content">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <a href="/index.html" class="logo">Vino<span>Elite</span></a>
+                    <nav class="nav-links" id="main-nav">
+                        <a href="/index.html">Home</a>
+                        <a href="/catalog.html">Catalog</a>
+                        <a href="#">Collections</a>
+                        <a href="#">Wineries</a>
+                        <a href="#">About Us</a>
+                        <div class="mobile-actions">
+                            <div class="mobile-search">
+                                <form class="search-box">
+                                    <input type="text" placeholder="Search wines...">
+                                    <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                                </form>
+                            </div>
+                            <a href="/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                                <i class="far fa-user"></i>
+                                <span>Sign In / Register</span>
+                            </a>
+                            <a href="/cart.html" class="mobile-action-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Shopping Cart</span>
+                                <span class="cart-count">0</span>
+                            </a>
+                            <a href="/profile.html#wishlist" class="mobile-action-btn">
+                                <i class="far fa-heart"></i>
+                                <span>Wishlist</span>
+                                <span class="wishlist-count">0</span>
+                            </a>
+                        </div>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="search-btn desktop-only" title="Search" aria-label="Search"><i class="fas fa-search"></i></button>
+                        <a href="/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist" aria-label="Wishlist"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                        <a href="/profile.html" class="auth-btn desktop-only" id="auth-button" title="Sign In"><i class="far fa-user"></i><span class="auth-text">Sign In</span></a>
+                        <a href="/cart.html" class="cart-btn desktop-only" title="Cart" aria-label="Cart"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                    </div>
+                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <section class="hero" id="hero-section">
+            <div class="hero-bg"></div>
+            <div class="container">
+                <div class="hero-content">
+                    <div class="hero-subtitle animate-on-scroll">Our finest selection</div>
+                    <h1 class="hero-title animate-on-scroll">Exclusive Wines</h1>
+                    <p class="hero-description animate-on-scroll">From around the world, delivered to you.</p>
+                    <a href="/catalog.html" class="btn-primary animate-on-scroll"><i class="fas fa-wine-bottle"></i> Explore Collection</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="categories-section">
+            <div class="container">
+                <div class="section-header animate-on-scroll">
+                    <div class="section-subtitle">Our Collection</div>
+                    <h2 class="section-title">Explore by Category</h2>
+                </div>
+                <div id="category-carousels-container">
+                    <!-- main.js will insert carousels here -->
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="products-section">
+            <div class="container">
+                <div class="section-header animate-on-scroll">
+                    <div class="section-subtitle">Exclusive</div>
+                    <h2 class="section-title">Featured Wines</h2>
+                </div>
+                <div class="products-grid">
+                    <!-- main.js will insert product cards here -->
+                </div>
+            </div>
+        </section>
+
+        <footer id="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-column">
+                        <h3>VinoElite</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Contact</a></li>
+                            <li><a href="#">Shipping & Payment</a></li>
+                            <li><a href="#">Returns</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Catalog</h3>
+                        <ul class="footer-links">
+                            <li><a href="/red-wine">Red Wines</a></li>
+                            <li><a href="/white-wine">White Wines</a></li>
+                            <li><a href="/sparkling-wine">Sparkling Wines</a></li>
+                            <li><a href="/spirits">Spirits</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Help</h3>
+                        <ul class="footer-links">
+                            <li><a href="#">FAQ</a></li>
+                            <li><a href="#">Terms of Use</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Sitemap</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h3>Contacts</h3>
+                        <ul class="footer-links">
+                            <li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li>
+                            <li><i class="fas fa-envelope"></i> info@vinoelite.com</li>
+                            <li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li>
+                        </ul>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-instagram"></i></a>
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-telegram"></i></a>
+                            <a href="#"><i class="fab fa-whatsapp"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2023 VinoElite. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="login-modal" class="login-modal">
+        <div class="login-modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h3>Sign In or Sign Up</h3>
+            <p>to access your cart and wishlist across devices.</p>
+            <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="separator"><span>OR</span></div>
+            <form id="auth-form">
+                <div class="form-group">
+                    <input type="email" id="auth-email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="auth-password" placeholder="Enter your password" required>
+                </div>
+                <div class="error-message" id="auth-error"></div>
+                <button type="submit" class="auth-submit-btn">Continue with Email</button>
+            </form>
+            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
+        </div>
+    </div>
+
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <button class="close-search-modal-btn" aria-label="Close">&times;</button>
+            <form id="desktop-search-form" class="search-box">
+                <input type="text" id="desktop-search-input" placeholder="Search for wines, regions, wineries...">
+                <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="/main.js" defer></script>
+</body>
+</html>
