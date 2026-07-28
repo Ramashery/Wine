@@ -4,11 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - "templates/**"
-      - "locales/**"
-      - "assets/**"
+      - "tpl_*.html"
+      - "styles.css"
+      - "main.js"
       - "generate_site.py"
       - "admin.html"
+      - "cart.html"
+      - "profile.html"
+      - "requirements.txt"
       - ".github/workflows/build-and-deploy.yml"
   schedule:
     # Rebuild once a day so catalog/price changes made in admin.html show
@@ -86,7 +89,7 @@ jobs:
 #      New variable → name it SITE_URL → value e.g. https://vinoelite.com
 #      (or https://<user>.github.io/<repo> if you don't have a custom domain).
 #   4. Repo → Settings → Pages → Source: "GitHub Actions".
-# After that, every push to templates/locales/assets/generate_site.py
+# After that, every push to tpl_*.html / styles.css / main.js / generate_site.py
 # rebuilds and redeploys automatically — and it also self-heals once a day
 # in case someone edited the catalog in admin.html without touching code.
 # ---------------------------------------------------------------------------
