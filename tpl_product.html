@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect for speed -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//firestore.googleapis.com">
+    <link rel="dns-prefetch" href="//www.gstatic.com">
+
+    <title>{{ title }}</title>
+    <meta name="description" content="{{ description }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{ title }}" />
+    <meta property="og:type" content="product" />
+    <meta property="og:description" content="{{ description }}" />
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta property="og:url" content="{{ canonical_url }}" />
+    <meta property="og:site_name" content="VinoElite" />
+
+    <!-- Schema.org: Product (built in generate_site.py, dumped with |tojson
+         so quotes/newlines in product data can never break the JSON) -->
+    <script type="application/ld+json">{{ product_schema | tojson }}</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ base_path }}/styles.css?v={{ asset_version }}">
+</head>
+<body data-page="product" data-base-path="{{ base_path }}">
+    <!-- LOADER REMOVED FOR LCP -->
+
+    <div id="main-site-content" class="loaded" style="opacity: 1;">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <a href="{{ base_path }}/index.html" class="logo">Vino<span>Elite</span></a>
+                    <nav class="nav-links" id="main-nav">
+                        <a href="{{ base_path }}/index.html">Home</a>
+                        <a href="{{ base_path }}/catalog.html">Catalog</a>
+                        <a href="#">Collections</a>
+                        <a href="#">Wineries</a>
+                        <a href="#">About Us</a>
+                        <div class="mobile-actions">
+                            <div class="mobile-search">
+                                <form class="search-box">
+                                    <input type="text" placeholder="Search wines...">
+                                    <button type="submit" aria-label="Search"><i class="fas fa-search"></i></button>
+                                </form>
+                            </div>
+                            <a href="{{ base_path }}/profile.html" class="mobile-action-btn" id="mobile-auth-button">
+                                <i class="far fa-user"></i>
+                                <span>Sign In / Register</span>
+                            </a>
+                            <a href="{{ base_path }}/cart.html" class="mobile-action-btn">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span>Shopping Cart</span>
+                                <span class="cart-count">0</span>
+                            </a>
+                            <a href="{{ base_path }}/profile.html#wishlist" class="mobile-action-btn">
+                                <i class="far fa-heart"></i>
+                                <span>Wishlist</span>
+                                <span class="wishlist-count">0</span>
+                            </a>
+                        </div>
+                    </nav>
+                    <div class="header-actions">
+                        <button class="search-btn desktop-only" title="Search" aria-label="Search"><i class="fas fa-search"></i></button>
+                        <a href="{{ base_path }}/profile.html#wishlist" class="wishlist-btn desktop-only" title="Wishlist" aria-label="Wishlist"><i class="far fa-heart"></i><span class="wishlist-count-badge">0</span></a>
+                        <a href="{{ base_path }}/profile.html" class="auth-btn desktop-only" id="auth-button" title="Sign In"><i class="far fa-user"></i><span class="auth-text">Sign In</span></a>
+                        <a href="{{ base_path }}/cart.html" class="cart-btn desktop-only" title="Cart" aria-label="Cart"><i class="fas fa-shopping-cart"></i><span class="cart-count-badge">0</span></a>
+                    </div>
+                    <button class="mobile-menu-btn" aria-label="Menu"><i class="fas fa-bars"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <section class="breadcrumb-section animate-on-scroll">
+            <div class="container">
+                <div class="breadcrumb" id="breadcrumb"></div>
+            </div>
+        </section>
+
+        <section class="pd-section">
+            <div class="container">
+                <!-- SKELETON UI (Visible Immediately) -->
+                <div class="product-container skeleton-container" id="product-skeleton">
+                    <div class="skeleton-gallery">
+                        <div class="skeleton-main-img"></div>
+                        <div class="skeleton-thumbs">
+                            <div class="skeleton-thumb"></div>
+                            <div class="skeleton-thumb"></div>
+                            <div class="skeleton-thumb"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-title"></div>
+                        <div class="skeleton-subtitle"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text"></div>
+                        <div class="skeleton-text w-80"></div>
+                        <div class="skeleton-price"></div>
+                        <div class="skeleton-btn-large"></div>
+                    </div>
+                </div>
+
+                <!-- REAL CONTENT (hydrated by main.js, hidden until ready) -->
+                <div class="pd-content animate-on-scroll" id="real-product-container" style="display: none;">
+
+                    <div class="pd-gallery">
+                        <div class="pd-gallery-main" id="product-gallery-main"></div>
+                        <button class="pd-zoom-btn" id="pd-zoom-btn" aria-label="Zoom image"><i class="fas fa-expand"></i></button>
+                    </div>
+                    <div class="pd-thumbnails" id="product-thumbnails"></div>
+
+                    <h1 class="pd-title" id="product-title"></h1>
+
+                    <div class="pd-facts" id="pd-facts-primary"></div>
+                    <div class="pd-facts" id="pd-facts-secondary"></div>
+
+                    <div class="pd-price" id="product-pricing"></div>
+                    <div class="stock-status" id="product-stock-status"></div>
+
+                    <div class="pd-purchase-row">
+                        <div class="quantity-selector">
+                            <button class="quantity-btn minus" aria-label="Decrease quantity">-</button>
+                            <input type="text" class="quantity-input" value="1" readonly aria-label="Quantity">
+                            <button class="quantity-btn plus" aria-label="Increase quantity">+</button>
+                        </div>
+                        <button class="pd-add-to-cart" id="add-to-cart-btn">
+                            <span>Add to Cart</span>
+                            <span class="cart-quantity-badge"></span>
+                        </button>
+                        <button class="pd-buy-now" id="pd-buy-now-btn">Buy Now</button>
+                    </div>
+
+                    <div class="pd-secondary-actions">
+                        <button class="pd-text-btn" id="pd-compare-btn"><i class="fas fa-random"></i> Compare</button>
+                        <button class="pd-text-btn wishlist-toggle-btn" id="pd-wishlist-btn"><i class="far fa-heart"></i> Add to wishlist</button>
+                    </div>
+
+                    <div class="pd-share">
+                        <span>Share:</span>
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="X"><i class="fab fa-x-twitter"></i></a>
+                        <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Telegram"><i class="fab fa-telegram-plane"></i></a>
+                    </div>
+
+                    <hr class="pd-divider">
+                    <div class="pd-safe-checkout"><i class="fas fa-shield-alt"></i> Guaranteed Safe Checkout</div>
+                    <hr class="pd-divider">
+
+                    <div class="pd-more" id="pd-more-details">
+                        <p class="pd-aroma" id="product-description"></p>
+                        <div id="pd-extra-details"></div>
+                    </div>
+                    <button class="pd-show-more" id="pd-show-more-btn" style="display: none;">Show More <i class="fas fa-chevron-down"></i></button>
+
+                    <div class="pd-reviews-toggle" id="pd-reviews-toggle">
+                        <span>Customer Reviews</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="pd-reviews-panel" id="pd-reviews-panel" style="display: none;">
+                        <div id="reviews-list"><p>Loading reviews...</p></div>
+                        <div id="review-form-container"></div>
+                    </div>
+
+                    <h2 class="pd-related-title">Related Categories</h2>
+                    <div class="pd-related-categories" id="pd-related-categories"></div>
+                </div>
+            </div>
+        </section>
+
+        <div class="pd-lightbox" id="pd-lightbox">
+            <button class="pd-lightbox-close" id="pd-lightbox-close" aria-label="Close">&times;</button>
+            <img src="" alt="" id="pd-lightbox-img">
+        </div>
+
+        <section class="related-section animate-on-scroll">
+            <div class="container">
+                <h2 class="section-title">You Might Also Like</h2>
+
+
+                <!-- SKELETON FOR RELATED PRODUCTS -->
+                <div class="products-grid" id="related-products-grid">
+                     <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                    <div class="product-card skeleton-card">
+                        <div class="skeleton-card-img"></div>
+                        <div class="skeleton-card-info">
+                            <div class="skeleton-text w-50"></div>
+                            <div class="skeleton-text w-80"></div>
+                            <div class="skeleton-text w-40"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer id="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-column"><h3>VinoElite</h3><ul class="footer-links"><li><a href="#">About Us</a></li><li><a href="#">Contact</a></li><li><a href="#">Shipping & Payment</a></li><li><a href="#">Returns</a></li></ul></div>
+                    <div class="footer-column"><h3>Catalog</h3><ul class="footer-links"><li><a href="{{ base_path }}/red-wine">Red Wines</a></li><li><a href="{{ base_path }}/white-wine">White Wines</a></li><li><a href="{{ base_path }}/sparkling-wine">Sparkling Wines</a></li><li><a href="{{ base_path }}/spirits">Spirits</a></li></ul></div>
+                    <div class="footer-column"><h3>Help</h3><ul class="footer-links"><li><a href="#">FAQ</a></li><li><a href="#">Terms of Use</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Sitemap</a></li></ul></div>
+                    <div class="footer-column"><h3>Contacts</h3><ul class="footer-links"><li><i class="fas fa-phone"></i> +7 (495) 123-45-67</li><li><i class="fas fa-envelope"></i> info@vinoelite.com</li><li><i class="fas fa-map-marker-alt"></i> Moscow, Vinaya St, 15</li></ul><div class="social-links"><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="Telegram"><i class="fab fa-telegram"></i></a><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a></div></div>
+                </div>
+                <div class="footer-bottom"><p>&copy; 2023 VinoElite. All rights reserved.</p></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="login-modal" class="login-modal">
+        <div class="login-modal-content">
+            <button class="close-modal-btn" aria-label="Close">&times;</button>
+            <h3>Sign In or Sign Up</h3>
+            <p>to access your cart and wishlist across devices.</p>
+            <button id="google-signin-btn" class="social-btn google"><i class="fab fa-google"></i> Continue with Google</button>
+            <div class="separator"><span>OR</span></div>
+            <form id="auth-form">
+                <div class="form-group">
+                    <input type="email" id="auth-email" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" id="auth-password" placeholder="Enter your password" required>
+                </div>
+                <div class="error-message" id="auth-error"></div>
+                <button type="submit" class="auth-submit-btn">Continue with Email</button>
+            </form>
+            <a href="#" id="forgot-password-link" class="forgot-password">Forgot Password?</a>
+        </div>
+    </div>
+
+    <div id="search-modal" class="search-modal">
+        <div class="search-modal-content">
+            <button class="close-search-modal-btn" aria-label="Close">&times;</button>
+            <form id="desktop-search-form" class="search-box"><input type="text" id="desktop-search-input" placeholder="Search for wines, regions, wineries..."><button type="submit" aria-label="Search"><i class="fas fa-search"></i></button></form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script type="module" src="{{ base_path }}/main.js?v={{ asset_version }}" defer></script>
+</body>
+</html>
